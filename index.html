@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中文小游戏 Китайские мини-игры</title>
+<style>
+  :root{
+    --bg:#fff7ec; --ink:#2b2a33; --muted:#6c6a78; --card:#ffffff; --line:#eadfce;
+    --obj:#2b6cb0; --key:#d9480f; --ok:#2f9e44; --bad:#e03131; --accent:#f08c00;
+    --zh: "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.4}
+  .zh{font-family:var(--zh)}
+  header{padding:18px 20px 6px;max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  h1{margin:0;font-size:clamp(22px,3.4vw,32px)}
+  h1 .zh{color:var(--key)}
+  .sub{margin:2px 0 0;color:var(--muted);font-size:15px}
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}
+  .chip[aria-pressed="true"]{background:#2b2a33;color:#fff;border-color:#2b2a33}
+  .chip.sel{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+  .chip.danger{background:#e03131;color:#fff;border-color:#e03131}
+  .hright{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .coinrow{display:flex;align-items:center;gap:10px}
+  .coinbox{position:relative;display:flex;align-items:center;gap:8px;background:#fff8e1;border:2px solid #f0c24a;border-radius:999px;padding:3px 18px 3px 8px;font-weight:800;font-size:24px;line-height:1.2;color:#8a5a00;min-width:96px}
+  .coinbox .ci{width:34px;height:34px;flex:none}
+  .coinbox .plus{position:absolute;right:12px;top:-8px;font-size:20px;color:#c77700;opacity:0;pointer-events:none}
+  .coinbox .plus.go{animation:plusUp 1s ease-out}
+  @keyframes plusUp{0%{opacity:1;transform:translateY(10px)}100%{opacity:0;transform:translateY(-24px)}}
+  .coinbox.pop{animation:popc .35s}
+  @keyframes popc{50%{transform:scale(1.12)}}
+  .ci{width:20px;height:20px;vertical-align:-4px}
+  @media (max-width:700px){.hright{align-items:flex-start;width:100%}}
+  @media (max-width:600px){.mode{font-size:14px;padding:10px 6px;flex-direction:column;gap:2px}.mode .zh{font-size:22px}}
+  /* ===== tones ===== */
+  .tgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  @media (max-width:900px){.tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .tcard{border:2.5px solid var(--tc);background:#fff;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;text-align:center}
+  .tcard .tn{font-weight:800;color:var(--tc);font-size:15px}
+  .tcard .tnote{font-size:14px;color:var(--muted)}
+  .tcard .mark{font-size:46px;font-weight:700;line-height:1;color:var(--tc)}
+  .tcard .hz{font-size:56px;font-weight:700;line-height:1.1;font-family:var(--zh)}
+  .tcard .tp{font-size:24px;font-weight:700;color:var(--tc)}
+  .tcard .mean{font-size:15px;color:var(--muted);min-height:22px}
+  .tsvg{width:100%;height:72px;background:#fffaf2;border-radius:10px;display:block}
+  .tb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:2px}
+  .tbtn{border:none;background:var(--tc);color:#fff;font:inherit;font-weight:700;font-size:14px;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .tbtn.ghost{background:#f1e4cf;color:#5a4a30}
+  .tbtn:focus-visible{outline:3px solid #74c0fc;outline-offset:2px}
+  .board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:14px;padding:18px 12px 12px;background:linear-gradient(#2a3a67,#1b2750);border-radius:18px}
+  @media (max-width:600px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .tbooth{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;font:inherit;padding:0}
+  .tbooth:focus-visible{outline:3px solid #74c0fc;outline-offset:4px;border-radius:12px}
+  .tgt{width:min(100%,150px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle closest-side,#fff 0 55%,var(--tc) 55% 70%,#fff 70% 85%,var(--tc) 85% 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.4);transition:transform .15s}
+  .tgt svg{width:46%;height:auto;display:block}
+  .tbooth:hover .tgt{transform:scale(1.06)}
+  .tlab{font-weight:800;font-size:18px;text-align:center;line-height:1.2}
+  .tlab small{display:block;font-weight:500;opacity:.85;font-size:14px}
+  .tbooth.ok .tgt{animation:hitok .7s forwards}
+  .tbooth.no .tgt{animation:shake .45s}
+  .tbooth.off{opacity:.3;pointer-events:none}
+  @keyframes hitok{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1.08);box-shadow:0 0 0 12px rgba(255,214,64,.6)}}
+  .dart{position:absolute;left:0;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#f5b400);box-shadow:0 0 10px #ffd43b;opacity:0;pointer-events:none;z-index:3}
+  .notice{max-width:1360px;margin:6px auto 0;padding:10px 14px;background:#fff0f0;color:#8a1c1c;border:1.5px solid #f3b5b5;border-radius:12px;font-size:14px}
+  header + .notice{width:calc(100% - 40px)}
+  .chip:focus-visible,.tab:focus-visible,.card:focus-visible,.btn:focus-visible,.mode:focus-visible,.opt:focus-visible,.mcard:focus-visible,.tile:focus-visible,.slot:focus-visible,.c:focus-visible{outline:3px solid #74c0fc;outline-offset:2px}
+  main{max-width:1400px;margin:0 auto;padding:6px 20px 40px}
+
+  .modes{display:flex;gap:10px;margin:8px 0 12px}
+  .mode{flex:1;border:2px solid var(--line);background:#fff;border-radius:16px;padding:12px 16px;font:inherit;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink)}
+  .mode .zh{font-size:26px;color:var(--key)}
+  .mode[aria-selected="true"]{background:#2b2a33;color:#fff;border-color:#2b2a33}
+  .mode[aria-selected="true"] .zh{color:#ffd43b}
+
+  .tabs{display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap}
+  .tab{border:none;background:#f1e4cf;border-radius:12px 12px 0 0;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;color:#6a5a40}
+  .tab[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 -2px 0 var(--accent) inset}
+  .toolbar{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+  .toolbar .tools{margin-bottom:8px}
+
+  .stage{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(300px,1fr);gap:18px;align-items:start}
+  .stage.wide{grid-template-columns:1fr}
+  @media (max-width:1000px){.stage{grid-template-columns:1fr}}
+  .scene-wrap{background:#fff;border:1.5px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 20px rgba(120,80,20,.08)}
+  svg#scene{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+  .scene-bar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-top:1.5px solid var(--line);font-size:16px;color:var(--muted)}
+  .panel{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 6px 20px rgba(120,80,20,.08)}
+  .panel h2{margin:0 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .phrase{font-size:clamp(36px,6vw,58px);font-weight:700;line-height:1.1;margin:6px 0}
+  .phrase .o{color:var(--obj)} .phrase .k{color:var(--key)}
+  .py-line{font-size:20px;color:var(--muted)}
+  .py-line .k{color:var(--key);font-weight:600}
+  .ru-line{font-size:22px;font-weight:600;margin-top:6px}
+  .tip{margin-top:12px;padding:10px 12px;background:#fff4e0;border-radius:12px;font-size:15px}
+  .tip b.o{color:var(--obj)} .tip b.k{color:var(--key)}
+  .placeholder{color:var(--muted);font-size:17px}
+  .btn{border:none;background:var(--accent);color:#fff;font:inherit;font-weight:600;padding:10px 16px;border-radius:12px;cursor:pointer}
+  .btn.ghost{background:#f1e4cf;color:#5a4a30}
+  .btn:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .nopy .py, .nopy .py-line{display:none}
+  .fb{min-height:48px;margin-top:12px;padding:10px 12px;border-radius:12px;font-size:16px}
+  .fb.ok{background:#ebfbee;color:#1b6b2f}
+  .fb.bad{background:#fff0f0;color:#a61e1e}
+  .meta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:6px}
+  .bar{height:8px;background:#f1e4cf;border-radius:99px;overflow:hidden;margin-bottom:10px}
+  .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+  .stars{font-size:42px;letter-spacing:6px;margin:6px 0}
+  .hidden{display:none !important}
+  h3.sec{margin:28px 0 6px;font-size:20px}
+  .groups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+  @media (max-width:1000px){.groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:560px){.groups{grid-template-columns:1fr}}
+  .group{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px}
+  .group h4{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
+  .card{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fffaf2;border-radius:12px;padding:10px 12px;margin-bottom:8px;font:inherit;cursor:pointer;transition:transform .12s,box-shadow .12s;color:var(--ink)}
+  .card:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(120,80,20,.12)}
+  .card.flash{animation:flash .7s}
+  @keyframes flash{0%{background:#ffe8a3}100%{background:#fffaf2}}
+  .card .big{font-size:30px;font-weight:700;color:var(--key);line-height:1.1}
+  .card .big small{font-size:14px;color:var(--muted);font-weight:500;font-family:system-ui,Arial,sans-serif;margin-left:6px}
+  .card .mean{font-weight:600;margin:2px 0}
+  .card .ex{font-size:14px;color:var(--muted)}
+  .card .ex .o{color:var(--obj);font-weight:700} .card .ex .k{color:var(--key);font-weight:700}
+  .card .ex .zh{font-size:18px}
+  .hint-note{font-size:13px;color:var(--muted);margin-top:6px}
+  .shake{animation:shake .45s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  /* svg bits */
+  #cat{cursor:grab;touch-action:none}
+  #cat.grab{cursor:grabbing}
+  .zone{fill:rgba(255,255,255,0);stroke:rgba(0,0,0,0);stroke-width:3;stroke-dasharray:8 6;transition:fill .15s,stroke .15s}
+  .zones-on .zone{stroke:rgba(43,108,176,.55);fill:rgba(43,108,176,.06)}
+  .zone.hot{fill:rgba(240,140,0,.22) !important;stroke:#f08c00 !important}
+  .zone.pulse{animation:pulse 1s ease-in-out 3;stroke:#f08c00}
+  @keyframes pulse{0%,100%{fill:rgba(240,140,0,.05)}50%{fill:rgba(240,140,0,.35)}}
+  .zlabel{font-size:18px;font-weight:700;fill:#2b6cb0;opacity:0;pointer-events:none}
+  .zones-on .zlabel{opacity:.85}
+  .tagbg{fill:#fff;stroke:#e5d4b8;stroke-width:1.5}
+  .tagzh{font-size:22px;font-weight:700;fill:#2b2a33}
+  .tagpy{font-size:13px;fill:#6c6a78}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#2b2a33;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center;z-index:10}
+  .toast.show{opacity:1}
+
+  /* ===== dates ===== */
+  .dgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:18px;align-items:start}
+  @media (max-width:900px){.dgrid{grid-template-columns:1fr}}
+  .dgame{max-width:920px}
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+  .cal .h{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;padding:6px 0;background:#f1e4cf;border:none;border-radius:8px;font:inherit;color:var(--ink)}
+  .cal .h .zh{font-size:22px;line-height:1.1}
+  .cal .h small{font-size:12px;color:var(--muted);font-weight:500}
+  .cal button.h{cursor:pointer}
+  .cal button.h:hover{background:#ecd6b4}
+  .cal .c{aspect-ratio:1.3/1;border:1.5px solid var(--line);border-radius:10px;background:#fffaf2;font:inherit;font-size:22px;font-weight:600;cursor:pointer;color:var(--ink);padding:0}
+  .cal .c:hover{border-color:#f0b35a}
+  .cal .c.empty{border:none;background:none;cursor:default;pointer-events:none}
+  .cal .c.today{border-color:var(--accent);background:#fff0d0}
+  .cal .c.sel{background:#2b2a33;color:#fff;border-color:#2b2a33}
+  .cal .c.ok,.cal .h.ok{background:#ebfbee;border-color:var(--ok)}
+  .cal .c.no,.cal .h.no{background:#fff0f0;border-color:var(--bad)}
+  .calnav{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .calnav .ttl{flex:1;text-align:center;font-size:26px;font-weight:700;min-width:180px}
+  .calnav .ttl small{display:block;font-size:14px;color:var(--muted);font-weight:500;font-family:system-ui,Arial,sans-serif}
+  .rel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+  .relc{border:1.5px solid var(--line);background:#fffaf2;border-radius:12px;padding:8px 6px;text-align:center;font:inherit;cursor:pointer;color:var(--ink)}
+  .relc:hover{border-color:#f0b35a}
+  .relc .w{font-size:26px;font-weight:700;color:var(--key);line-height:1.1}
+  .relc .py-line{font-size:13px}
+  .relc small{display:block;font-size:13px;color:var(--muted)}
+  .bigdate{font-size:clamp(34px,5vw,52px);font-weight:700;line-height:1.15;margin:4px 0}
+  .bigdate .o{color:var(--obj)} .bigdate .k{color:var(--key)}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  @media (max-width:560px){.opts{grid-template-columns:1fr}}
+  .opt{border:2px solid var(--line);background:#fffaf2;border-radius:14px;padding:14px;font:inherit;font-size:22px;font-weight:600;cursor:pointer;text-align:center;min-height:72px;display:flex;flex-direction:column;justify-content:center;gap:2px;color:var(--ink)}
+  .opt:hover{border-color:#f0b35a}
+  .opt .big{font-size:36px;font-weight:700;line-height:1.1}
+  .opt .py-line{font-size:16px}
+  .opt.ok{background:#ebfbee;border-color:var(--ok)}
+  .opt.no{background:#fff0f0;border-color:var(--bad);opacity:.6}
+  .qprompt{margin:6px 0 4px}
+  .qask{font-size:15px;color:var(--muted)}
+  .mboard{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;margin-top:12px}
+  .mcol{display:flex;flex-direction:column;gap:10px}
+  .mcard{border:2px solid var(--line);background:#fffaf2;border-radius:14px;padding:10px 12px;font:inherit;font-size:22px;font-weight:600;cursor:pointer;text-align:center;min-height:74px;display:flex;flex-direction:column;justify-content:center;color:var(--ink)}
+  .mcard .big{font-size:32px;font-weight:700;line-height:1.1}
+  .mcard .py-line{font-size:15px}
+  .mcard:hover{border-color:#f0b35a}
+  .mcard.sel{border-color:var(--obj);background:#e7f1ff}
+  .mcard.done{background:#ebfbee;border-color:var(--ok);opacity:.55;pointer-events:none}
+  .mcard.wrong{background:#fff0f0;border-color:var(--bad);animation:shake .45s}
+  .slots{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .slot{width:70px;height:84px;border:2.5px dashed #d8c4a0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;background:#fffaf2;cursor:pointer;font-family:var(--zh);color:var(--ink);padding:0}
+  .slot.f{border-style:solid;border-color:var(--obj)}
+  .slot.good{border-color:var(--ok);background:#ebfbee}
+  .tiles{display:flex;gap:10px;flex-wrap:wrap}
+  .tile{width:70px;height:70px;border:2px solid var(--line);background:#fff;border-radius:12px;font-size:38px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #e2d4bd;font-family:var(--zh);color:var(--ink);padding:0}
+  .tile:hover{border-color:#f0b35a}
+  .tile.used{opacity:.22;pointer-events:none}
+  .tile.hint{animation:pulse2 .8s ease-in-out 3}
+  @keyframes pulse2{0%,100%{background:#fff}50%{background:#ffe08a}}
+  .topics{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="coin" viewBox="0 0 32 32">
+    <path fill-rule="evenodd" fill="#d9951c" d="M16 1a15 15 0 1 0 0 30a15 15 0 1 0 0-30zM11 11h10v10H11z"/>
+    <path fill-rule="evenodd" fill="#f8cd4f" d="M16 3a13 13 0 1 0 0 26a13 13 0 1 0 0-26zM11 11h10v10H11z"/>
+    <circle cx="16" cy="16" r="11" fill="none" stroke="#c98a14" stroke-width="1"/>
+    <rect x="11" y="11" width="10" height="10" fill="none" stroke="#c98a14" stroke-width="1.4"/>
+    <path d="M7.5 9.5a11 11 0 0 1 6-5" fill="none" stroke="#fff3b0" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="16" cy="6.8" r="1.1" fill="#c98a14"/><circle cx="16" cy="25.2" r="1.1" fill="#c98a14"/>
+    <circle cx="6.8" cy="16" r="1.1" fill="#c98a14"/><circle cx="25.2" cy="16" r="1.1" fill="#c98a14"/>
+  </symbol>
+</defs></svg>
+<header>
+  <div>
+    <h1><span class="zh">中文小游戏</span> Китайские мини-игры</h1>
+    <p class="sub">Играй, перетаскивай и нажимай, чтобы запомнить китайские слова.</p>
+  </div>
+  <div class="hright">
+    <div class="coinrow">
+      <div class="coinbox" id="coinBox" title="Твои золотые монетки" aria-live="polite">
+        <svg class="ci" viewBox="0 0 32 32" aria-hidden="true"><use href="#coin"/></svg>
+        <span id="coinNum">0</span>
+        <span class="plus" id="coinPlus" aria-hidden="true"></span>
+      </div>
+      <button class="chip" id="coinClear">Очистить баланс</button>
+    </div>
+    <div class="tools">
+      <button class="chip" id="tPinyin" aria-pressed="true">Пиньинь: вкл</button>
+      <button class="chip" id="tSound" aria-pressed="true">Звук: вкл</button>
+      <button class="chip" id="tSlow" aria-pressed="false">Скорость: обычная</button>
+    </div>
+  </div>
+</header>
+<div class="notice hidden" id="voiceNote" role="status">
+  <b>Не найден китайский голос.</b> Без него звук будет искажённым или пропадёт.
+  Лучше всего открыть страницу в Google Chrome: там есть голос «Google 普通话».
+</div>
+
+<main id="app">
+  <div class="modes" role="tablist">
+    <button class="mode" id="mCat" role="tab" aria-selected="true"><span class="zh">位置</span> Где кот?</button>
+    <button class="mode" id="mDate" role="tab" aria-selected="false"><span class="zh">日期</span> Даты</button>
+    <button class="mode" id="mTone" role="tab" aria-selected="false"><span class="zh">声调</span> Тоны</button>
+  </div>
+
+  <!-- ================= SECTION: CAT ================= -->
+  <section id="secCat">
+    <div class="toolbar">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabExplore" aria-selected="true">Исследуем</button>
+        <button class="tab" role="tab" id="tabGame" aria-selected="false">Игра</button>
+      </div>
+      <div class="tools">
+        <button class="chip" id="tZones" aria-pressed="false">Показать зоны</button>
+        <button class="chip" id="tWide" aria-pressed="false">Крупно</button>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="scene-wrap">
+        <svg id="scene" viewBox="0 0 960 540" role="img" aria-label="Комната: дверь, мальчик, стол, стул, рюкзак и кот, которого можно перетаскивать">
+          <defs>
+            <linearGradient id="floorG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0ad74"/><stop offset="1" stop-color="#c98f55"/></linearGradient>
+            <linearGradient id="doorway" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b2d33"/><stop offset="1" stop-color="#5a4650"/></linearGradient>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3ff"/><stop offset="1" stop-color="#e8f6ff"/></linearGradient>
+          </defs>
+
+          <g id="gBg">
+            <rect x="0" y="0" width="960" height="400" fill="#fbe5c8"/>
+            <rect x="0" y="0" width="960" height="400" fill="#f6d8b0" opacity=".25"/>
+            <rect x="0" y="392" width="960" height="10" fill="#fff4e2"/>
+            <rect x="0" y="400" width="960" height="140" fill="url(#floorG)"/>
+            <g stroke="#b98348" stroke-width="2" opacity=".5">
+              <line x1="0" y1="432" x2="960" y2="432"/><line x1="0" y1="470" x2="960" y2="470"/><line x1="0" y1="508" x2="960" y2="508"/>
+              <line x1="180" y1="400" x2="150" y2="432"/><line x1="480" y1="400" x2="470" y2="432"/><line x1="760" y1="400" x2="790" y2="432"/>
+              <line x1="90" y1="432" x2="60" y2="470"/><line x1="390" y1="432" x2="380" y2="470"/><line x1="690" y1="432" x2="710" y2="470"/>
+              <line x1="250" y1="470" x2="230" y2="508"/><line x1="560" y1="470" x2="555" y2="508"/><line x1="850" y1="470" x2="870" y2="508"/>
+            </g>
+            <ellipse cx="510" cy="466" rx="250" ry="44" fill="#e8806a" opacity=".55"/>
+            <ellipse cx="510" cy="466" rx="220" ry="34" fill="none" stroke="#fff3e6" stroke-width="3" stroke-dasharray="10 8" opacity=".8"/>
+            <g>
+              <rect x="660" y="60" width="150" height="140" rx="8" fill="#fff"/>
+              <rect x="670" y="70" width="130" height="120" fill="url(#sky)"/>
+              <circle cx="765" cy="108" r="16" fill="#ffd43b"/>
+              <path d="M676 170 q18 -22 38 -4 q16 -20 40 0 l0 14 h-78z" fill="#fff" opacity=".9"/>
+              <rect x="733" y="70" width="4" height="120" fill="#fff"/><rect x="670" y="128" width="130" height="4" fill="#fff"/>
+            </g>
+            <circle cx="330" cy="112" r="34" fill="#fff" stroke="#c97b4a" stroke-width="6"/>
+            <line x1="330" y1="112" x2="330" y2="90" stroke="#2b2a33" stroke-width="4" stroke-linecap="round"/>
+            <line x1="330" y1="112" x2="348" y2="120" stroke="#2b2a33" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="330" cy="112" r="3.5" fill="#d9480f"/>
+            <rect x="450" y="70" width="110" height="80" rx="6" fill="#fff" stroke="#a8693b" stroke-width="7"/>
+            <path d="M462 138 l28 -34 l22 24 l16 -14 l22 24z" fill="#69db7c"/><circle cx="534" cy="92" r="9" fill="#ffd43b"/>
+          </g>
+
+          <g id="gDoorway">
+            <rect x="14" y="62" width="162" height="340" rx="6" fill="#a8693b"/>
+            <rect x="22" y="70" width="146" height="330" fill="url(#doorway)"/>
+          </g>
+
+          <g id="gBagBack">
+            <rect x="850" y="350" width="82" height="86" rx="16" fill="#2c6aa8"/>
+            <ellipse cx="891" cy="352" rx="38" ry="9" fill="#14253a"/>
+          </g>
+
+          <g id="layerA"></g>
+
+          <g id="gDoorLeaf">
+            <rect x="22" y="72" width="92" height="330" rx="4" fill="#d08a54"/>
+            <rect x="34" y="88" width="68" height="120" rx="5" fill="#c27a45"/>
+            <rect x="34" y="226" width="68" height="150" rx="5" fill="#c27a45"/>
+            <circle cx="98" cy="240" r="7" fill="#ffd43b" stroke="#c9a227" stroke-width="2"/>
+            <rect x="22" y="72" width="6" height="330" fill="#a8693b"/>
+          </g>
+          <g id="gBagFront">
+            <rect x="850" y="378" width="82" height="58" rx="12" fill="#3b82c4"/>
+            <rect x="866" y="400" width="50" height="30" rx="8" fill="#2c6aa8"/>
+            <rect x="885" y="406" width="12" height="4" rx="2" fill="#ffd43b"/>
+            <path d="M850 372 q-14 14 -4 40" stroke="#1f4f80" stroke-width="6" fill="none" stroke-linecap="round"/>
+          </g>
+          <g id="gKid" transform="translate(215 442)">
+            <ellipse cx="0" cy="0" rx="34" ry="7" fill="#000" opacity=".12"/>
+            <rect x="-17" y="-44" width="13" height="44" rx="5" fill="#3b4a6b"/>
+            <rect x="4" y="-44" width="13" height="44" rx="5" fill="#3b4a6b"/>
+            <ellipse cx="-12" cy="0" rx="14" ry="6" fill="#2b2a33"/><ellipse cx="12" cy="0" rx="14" ry="6" fill="#2b2a33"/>
+            <rect x="-28" y="-118" width="56" height="78" rx="18" fill="#e8590c"/>
+            <rect x="-40" y="-110" width="16" height="52" rx="8" fill="#e8590c"/>
+            <rect x="24" y="-110" width="16" height="52" rx="8" fill="#e8590c"/>
+            <circle cx="-32" cy="-56" r="8" fill="#ffd8a8"/><circle cx="32" cy="-56" r="8" fill="#ffd8a8"/>
+            <circle cx="0" cy="-146" r="26" fill="#ffd8a8"/>
+            <path d="M-27 -150 q3 -30 27 -30 q26 0 27 30 q-12 -14 -27 -14 q-15 0 -27 14z" fill="#3a2a22"/>
+            <circle cx="-9" cy="-144" r="3.2" fill="#2b2a33"/><circle cx="9" cy="-144" r="3.2" fill="#2b2a33"/>
+            <path d="M-8 -132 q8 8 16 0" stroke="#c2410c" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <g transform="translate(0 -222)">
+              <path d="M-38 -26 h76 a10 10 0 0 1 10 10 v34 a10 10 0 0 1 -10 10 h-26 l-12 14 l-12 -14 h-26 a10 10 0 0 1 -10 -10 v-34 a10 10 0 0 1 10 -10z" class="tagbg"/>
+              <text x="0" y="2" text-anchor="middle" class="tagzh zh">我</text>
+              <text x="0" y="18" text-anchor="middle" class="tagpy py">wǒ</text>
+            </g>
+          </g>
+          <g id="gChair">
+            <rect x="806" y="256" width="14" height="86" rx="5" fill="#a8693b"/>
+            <rect x="740" y="334" width="80" height="14" rx="5" fill="#b9784a"/>
+            <rect x="742" y="348" width="10" height="72" rx="3" fill="#a8693b"/>
+            <rect x="808" y="348" width="10" height="72" rx="3" fill="#a8693b"/>
+          </g>
+          <g id="gTable">
+            <rect x="430" y="306" width="12" height="114" rx="3" fill="#8f5a30"/>
+            <rect x="578" y="306" width="12" height="114" rx="3" fill="#8f5a30"/>
+            <rect x="420" y="290" width="180" height="18" rx="6" fill="#b9784a"/>
+            <rect x="420" y="290" width="180" height="6" rx="3" fill="#d09663"/>
+            <rect x="560" y="268" width="26" height="22" rx="4" fill="#ff8787"/><path d="M586 274 q10 2 0 12" stroke="#ff8787" stroke-width="4" fill="none"/>
+          </g>
+
+          <g id="gTags">
+            <g transform="translate(510 454)"><rect x="-54" y="-8" width="108" height="52" rx="10" class="tagbg"/><text x="0" y="16" text-anchor="middle" class="tagzh zh">桌子</text><text x="0" y="35" text-anchor="middle" class="tagpy py">zhuōzi</text></g>
+            <g transform="translate(780 446)"><rect x="-54" y="-8" width="108" height="52" rx="10" class="tagbg"/><text x="0" y="16" text-anchor="middle" class="tagzh zh">椅子</text><text x="0" y="35" text-anchor="middle" class="tagpy py">yǐzi</text></g>
+            <g transform="translate(891 452)"><rect x="-54" y="-8" width="108" height="52" rx="10" class="tagbg"/><text x="0" y="16" text-anchor="middle" class="tagzh zh">书包</text><text x="0" y="35" text-anchor="middle" class="tagpy py">shūbāo</text></g>
+            <g transform="translate(92 12)"><rect x="-40" y="-8" width="80" height="52" rx="10" class="tagbg"/><text x="0" y="16" text-anchor="middle" class="tagzh zh">门</text><text x="0" y="35" text-anchor="middle" class="tagpy py">mén</text></g>
+          </g>
+
+          <g id="layerB"></g>
+          <g id="layerDrag"></g>
+          <g id="zones"></g>
+
+          <g id="cat" transform="translate(500 492) scale(1.4)" tabindex="0" aria-label="Кот. Перетащи его.">
+            <rect x="-36" y="-74" width="72" height="80" fill="transparent"/>
+            <ellipse cx="0" cy="0" rx="26" ry="6" fill="#000" opacity=".15"/>
+            <path d="M20 -10 q30 -2 26 -34 q-2 -10 -10 -6" stroke="#f2a65a" stroke-width="9" fill="none" stroke-linecap="round"/>
+            <ellipse cx="0" cy="-19" rx="25" ry="19" fill="#f2a65a"/>
+            <path d="M-12 -34 q4 8 0 14 M0 -37 q4 9 0 17 M12 -34 q-4 8 0 14" stroke="#d9822b" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <ellipse cx="-11" cy="-2" rx="9" ry="5" fill="#fff3e0"/><ellipse cx="11" cy="-2" rx="9" ry="5" fill="#fff3e0"/>
+            <path d="M-22 -50 l3 -17 l13 9z M22 -50 l-3 -17 l-13 9z" fill="#f2a65a"/>
+            <path d="M-18 -56 l1 -7 l5 4z M18 -56 l-1 -7 l-5 4z" fill="#ffb8b8"/>
+            <circle cx="0" cy="-42" r="18" fill="#f2a65a"/>
+            <circle cx="-6.5" cy="-44" r="3" fill="#2b2a33"/><circle cx="6.5" cy="-44" r="3" fill="#2b2a33"/>
+            <circle cx="-5.5" cy="-45" r="1" fill="#fff"/><circle cx="7.5" cy="-45" r="1" fill="#fff"/>
+            <path d="M-2.5 -38 h5 l-2.5 3z" fill="#e8718d"/>
+            <path d="M0 -35 q-4 5 -8 1 M0 -35 q4 5 8 1" stroke="#7a4a2a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M-12 -38 l-14 -3 M-12 -35 l-14 3 M12 -38 l14 -3 M12 -35 l14 3" stroke="#7a4a2a" stroke-width="1.2" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <div class="scene-bar">
+          <span id="posText">Кот ждёт тебя на полу. Потяни его мышкой или пальцем.</span>
+          <span class="zh" style="font-size:18px">猫 māo — кот</span>
+        </div>
+      </div>
+
+      <section class="panel" id="pExplore" aria-live="polite">
+        <h2>Где сейчас кот?</h2>
+        <div id="exEmpty" class="placeholder">Поставь кота рядом со столом, стулом, рюкзаком, дверью или мальчиком. Здесь появится китайская фраза.</div>
+        <div id="exBody" class="hidden">
+          <div class="phrase zh" id="phHan"></div>
+          <div class="py-line" id="phPy"></div>
+          <div class="ru-line" id="phRu"></div>
+          <div class="tip" id="phTip"></div>
+          <div class="row"><button class="btn" id="bSay">Послушать</button></div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="pGame" aria-live="polite">
+        <h2>Игра: сделай фразу правдой</h2>
+        <div id="gStart">
+          <p class="placeholder" style="margin-top:0">8 заданий. Прочитай китайское предложение и поставь кота в нужное место. Перевод можно открыть, если трудно.</p>
+          <button class="btn" id="bStart">Начать игру</button>
+        </div>
+        <div id="gPlay" class="hidden">
+          <div class="meta"><span id="gProg">Задание 1 из 8</span><span id="gScore">Верно с первого раза: 0</span></div>
+          <div class="bar"><i id="gBar"></i></div>
+          <div class="phrase zh" id="gHan" style="font-size:clamp(30px,4vw,44px)"></div>
+          <div class="py-line" id="gPy"></div>
+          <div class="ru-line hidden" id="gRu"></div>
+          <div class="row">
+            <button class="btn ghost" id="bRu">Показать перевод</button>
+            <button class="btn ghost" id="bHint">Подсказка</button>
+            <button class="btn ghost" id="bSay2">Послушать</button>
+          </div>
+          <div class="fb" id="gFb"></div>
+        </div>
+        <div id="gEnd" class="hidden">
+          <div class="stars" id="gStars"></div>
+          <p id="gEndText" style="font-size:18px;margin:4px 0 12px"></p>
+          <button class="btn" id="bAgain">Играть ещё раз</button>
+        </div>
+      </section>
+    </div>
+
+    <h3 class="sec">Ключевые слова <span class="zh" style="color:var(--key)">位置</span> — нажми на карточку, и кот покажет пример</h3>
+    <div class="groups" id="groups"></div>
+    <p class="hint-note">Правило: сначала называем предмет, потом слово места: <b class="zh">桌子 + 上</b> = «на столе».</p>
+  </section>
+
+  <!-- ================= SECTION: DATES ================= -->
+  <section id="secDate" class="hidden">
+    <div class="tabs" role="tablist" id="dTabs">
+      <button class="tab" role="tab" data-d="learn" aria-selected="true">Календарь</button>
+      <button class="tab" role="tab" data-d="quiz" aria-selected="false">Выбери ответ</button>
+      <button class="tab" role="tab" data-d="match" aria-selected="false">Найди пару</button>
+      <button class="tab" role="tab" data-d="build" aria-selected="false">Собери дату</button>
+      <button class="tab" role="tab" data-d="find" aria-selected="false">Найди на календаре</button>
+    </div>
+
+    <!-- learn -->
+    <div class="dgrid" id="dLearn">
+      <div class="panel">
+        <div class="calnav">
+          <button class="btn ghost" id="lcPrev" aria-label="Предыдущий месяц">◀</button>
+          <div class="ttl" id="lcTitle"></div>
+          <button class="btn ghost" id="lcNext" aria-label="Следующий месяц">▶</button>
+          <button class="btn" id="lcToday">Сегодня</button>
+        </div>
+        <div class="cal" id="lcGrid"></div>
+        <p class="hint-note">Нажимай на числа: услышишь, как они читаются. Дни недели: <b class="zh">星期</b> + <b class="zh">一…六</b>, а воскресенье — <b class="zh">星期天</b> (или <b class="zh">星期日</b>).</p>
+      </div>
+      <div class="panel" aria-live="polite">
+        <h2>Что выбрано</h2>
+        <div class="bigdate zh" id="lcBig"></div>
+        <div class="bigdate zh" id="lcWd" style="font-size:clamp(28px,4vw,40px)"></div>
+        <div class="py-line" id="lcPy"></div>
+        <div class="ru-line" id="lcRu"></div>
+        <div class="row"><button class="btn" id="lcSay">Послушать</button></div>
+        <h2 style="margin-top:18px">Вчера · Сегодня · Завтра</h2>
+        <div class="rel" id="lcRel"></div>
+        <div class="tip">
+          <b>Как считать до 31.</b> 1–10: <span class="zh">一 二 三 四 五 六 七 八 九 十</span>.
+          11–19: <b class="zh">十</b> + цифра (<span class="zh">十五</span> = 15).
+          20 и больше: цифра + <b class="zh">十</b> + цифра (<span class="zh">二十三</span> = 23).
+          Порядок даты: <b class="zh">月 → 号 → 星期</b>.
+        </div>
+      </div>
+    </div>
+
+    <!-- quiz -->
+    <div class="panel dgame hidden" id="dQuiz" aria-live="polite">
+      <h2>Выбери правильный ответ</h2>
+      <div id="qzStart">
+        <p class="placeholder" style="margin-top:0">10 вопросов с 4 вариантами ответа. Выбери тему:</p>
+        <div class="topics" id="qzTopics"></div>
+        <button class="btn" id="qzGo">Начать</button>
+      </div>
+      <div id="qzPlay" class="hidden">
+        <div class="meta"><span id="qzProg"></span><span id="qzScore"></span></div>
+        <div class="bar"><i id="qzBar"></i></div>
+        <div class="qask" id="qzAsk"></div>
+        <div class="qprompt" id="qzPrompt"></div>
+        <div class="row"><button class="btn ghost" id="qzSay">Послушать</button></div>
+        <div class="opts" id="qzOpts"></div>
+        <div class="fb" id="qzFb"></div>
+        <div class="row"><button class="btn hidden" id="qzNext">Дальше →</button></div>
+      </div>
+      <div id="qzEnd" class="hidden">
+        <div class="stars" id="qzStars"></div>
+        <p id="qzEndText" style="font-size:18px;margin:4px 0 12px"></p>
+        <button class="btn" id="qzAgain">Играть ещё раз</button>
+      </div>
+    </div>
+
+    <!-- match -->
+    <div class="panel dgame hidden" id="dMatch" aria-live="polite">
+      <h2>Найди пару: иероглифы и перевод</h2>
+      <div id="mtStart">
+        <p class="placeholder" style="margin-top:0">Нажми на китайскую карточку, потом на её перевод. Всего 6 пар. Выбери тему:</p>
+        <div class="topics" id="mtTopics"></div>
+        <button class="btn" id="mtGo">Начать</button>
+      </div>
+      <div id="mtPlay" class="hidden">
+        <div class="meta"><span id="mtProg"></span><span id="mtMist"></span></div>
+        <div class="bar"><i id="mtBar"></i></div>
+        <div class="mboard"><div class="mcol" id="mtL"></div><div class="mcol" id="mtR"></div></div>
+      </div>
+      <div id="mtEnd" class="hidden">
+        <div class="stars" id="mtStars"></div>
+        <p id="mtEndText" style="font-size:18px;margin:4px 0 12px"></p>
+        <button class="btn" id="mtAgain">Ещё раунд</button>
+      </div>
+    </div>
+
+    <!-- build -->
+    <div class="panel dgame hidden" id="dBuild" aria-live="polite">
+      <h2>Собери дату из иероглифов</h2>
+      <div id="bdStart">
+        <p class="placeholder" style="margin-top:0">Тебе дают дату по-русски. Нажимай на плитки с иероглифами по порядку, чтобы сложить её по-китайски. Лишние плитки не нужны!</p>
+        <button class="btn" id="bdGo">Начать</button>
+      </div>
+      <div id="bdPlay" class="hidden">
+        <div class="meta"><span id="bdProg"></span><span id="bdScore"></span></div>
+        <div class="bar"><i id="bdBar"></i></div>
+        <div class="qask">Собери по-китайски:</div>
+        <div class="phrase" id="bdPrompt" style="font-size:clamp(30px,4vw,44px)"></div>
+        <div class="slots" id="bdSlots"></div>
+        <div class="tiles" id="bdTiles"></div>
+        <div class="row">
+          <button class="btn ghost" id="bdClear">Стереть всё</button>
+          <button class="btn ghost" id="bdHint">Подсказка</button>
+        </div>
+        <div class="fb" id="bdFb"></div>
+        <div class="row"><button class="btn hidden" id="bdNext">Дальше →</button></div>
+      </div>
+      <div id="bdEnd" class="hidden">
+        <div class="stars" id="bdStars"></div>
+        <p id="bdEndText" style="font-size:18px;margin:4px 0 12px"></p>
+        <button class="btn" id="bdAgain">Играть ещё раз</button>
+      </div>
+    </div>
+
+    <!-- find on calendar -->
+    <div class="panel dgame hidden" id="dFind" aria-live="polite">
+      <h2>Найди на календаре</h2>
+      <div id="cfStart">
+        <p class="placeholder" style="margin-top:0">Прочитай задание по-китайски и нажми на нужное число или на нужный день недели (сверху в таблице). 8 заданий.</p>
+        <button class="btn" id="cfGo">Начать</button>
+      </div>
+      <div id="cfPlay" class="hidden">
+        <div class="meta"><span id="cfProg"></span><span id="cfScore"></span></div>
+        <div class="bar"><i id="cfBar"></i></div>
+        <div class="qask" id="cfMonth"></div>
+        <div class="phrase zh" id="cfPrompt" style="font-size:clamp(30px,4vw,44px)"></div>
+        <div class="py-line" id="cfPy"></div>
+        <div class="ru-line hidden" id="cfRu"></div>
+        <div class="row">
+          <button class="btn ghost" id="cfSay">Послушать</button>
+          <button class="btn ghost" id="cfTr">Показать перевод</button>
+        </div>
+        <div class="cal" id="cfGrid" style="margin-top:14px"></div>
+        <div class="fb" id="cfFb"></div>
+      </div>
+      <div id="cfEnd" class="hidden">
+        <div class="stars" id="cfStars"></div>
+        <p id="cfEndText" style="font-size:18px;margin:4px 0 12px"></p>
+        <button class="btn" id="cfAgain">Играть ещё раз</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SECTION: TONES ================= -->
+  <section id="secTone" class="hidden">
+    <div class="tabs" role="tablist" id="tTabs">
+      <button class="tab" role="tab" data-t="play" aria-selected="true">Поиграй с тонами</button>
+      <button class="tab" role="tab" data-t="shoot" aria-selected="false">Тоновый тир</button>
+    </div>
+
+    <div id="tPlay">
+      <div class="panel">
+        <h2>4 тона: нажми «Свист» и послушай</h2>
+        <div class="tgrid" id="tLegend"></div>
+        <p class="hint-note">«Свист» — это просто высота звука без слова. Так хорошо слышно, как тон идёт вверх и вниз.</p>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Один слог — четыре разных слова</h2>
+        <div class="topics" id="tSets"></div>
+        <div class="tgrid" id="tWords"></div>
+        <p class="hint-note">Буквы одни и те же, меняется только тон, а слово получается совсем другое!</p>
+      </div>
+    </div>
+
+    <div class="panel dgame hidden" id="tShoot" aria-live="polite">
+      <h2>Тоновый тир</h2>
+      <div id="tsStart">
+        <p class="placeholder" style="margin-top:0">Слушай слово и «стреляй» в мишень с нужным тоном. Всего 10 выстрелов. Выбери тему слов:</p>
+        <div class="topics" id="tsTopics"></div>
+        <div class="notice hidden" id="tsWarn" style="margin:0 0 12px">Не найден китайский голос, поэтому слово не прозвучит. Лучше открыть страницу в Google Chrome.</div>
+        <button class="btn" id="tsGo">Начать</button>
+      </div>
+      <div id="tsPlay" class="hidden">
+        <div class="meta"><span id="tsProg"></span><span id="tsScore"></span></div>
+        <div class="bar"><i id="tsBar"></i></div>
+        <div class="row" style="margin-top:0">
+          <button class="btn" id="tsSay">🔊 Слушать ещё раз</button>
+          <button class="btn ghost" id="tsHint">Показать иероглиф</button>
+        </div>
+        <div class="ru-line zh" id="tsHan" style="min-height:34px"></div>
+        <div class="board" id="tsBoard"><div class="dart" id="tsDart"></div></div>
+        <div class="fb" id="tsFb"></div>
+        <div class="row"><button class="btn hidden" id="tsNext">Дальше →</button></div>
+      </div>
+      <div id="tsEnd" class="hidden">
+        <div class="stars" id="tsStars"></div>
+        <p id="tsEndText" style="font-size:18px;margin:4px 0 12px"></p>
+        <button class="btn" id="tsAgain">Стрелять ещё раз</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const randInt = (n) => Math.floor(Math.random() * n);
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const starStr = (good, total) => { const r = good / total; const s = r >= 0.9 ? 3 : r >= 0.6 ? 2 : 1; return "⭐".repeat(s) + "☆".repeat(3 - s); };
+
+  // ---------- speech ----------
+  const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+  let soundOn = canSpeak;
+  const synth = canSpeak ? window.speechSynthesis : null;
+  let zhVoices = [];          // Mandarin voices, best first: [{v, s}]
+  let slowMode = false;
+  let voicesSeen = false;
+  try { slowMode = localStorage.getItem("zhSlow") === "1"; } catch (_) {}
+
+  const MALE_RE = /kangkang|yun(xi|yang|jian|hao|xia|ze|fan)|li-?mu|zhiwei|danny|\bmale\b/i;
+  const FEMALE_RE = /ting-?ting|tian-?tian|yu-?shu|li-?li|lilian|mei-?jia|xiao[a-z]*|hui-?hui|yao-?yao|female|普通话|婷|晓|慧|瑶|美佳/i;
+  // Higher = better. null = not Chinese. The voice is always "Google 普通话" when it exists;
+  // the rest of the scoring only matters as a fallback on devices without it (never Cantonese, never male if avoidable).
+  function voiceScore(v) {
+    const lang = (v.lang || "").replace("_", "-").toLowerCase(), name = v.name || "";
+    if (!/^(zh|cmn)/.test(lang)) return null;
+    if (/hk|yue/.test(lang) || /sin-?ji|cantonese|粤/i.test(name)) return -100;
+    let s = 0;
+    if (/google/i.test(name) && /普通话|mandarin/i.test(name)) s += 200;
+    if (/^(zh-cn|zh-hans|cmn-cn|cmn-hans)/.test(lang)) s += 30;
+    else if (lang === "zh" || lang === "cmn") s += 20;
+    else if (/tw|hant/.test(lang)) s += 8;
+    if (/natural|neural|online/i.test(name)) s += 40;
+    if (/premium|enhanced|增强|优质|улучш/i.test(name)) s += 25;
+    if (FEMALE_RE.test(name)) s += 50;
+    if (MALE_RE.test(name)) s -= 80;
+    if (v.localService) s += 5;
+    return s;
+  }
+  function updateVoiceNote() {
+    $("voiceNote").classList.toggle("hidden", !(voicesSeen && !pickVoice()));
+  }
+  function refreshVoices() {
+    if (!synth) return;
+    const all = synth.getVoices() || [];
+    if (all.length) voicesSeen = true;
+    zhVoices = all.map(v => ({ v, s: voiceScore(v) })).filter(x => x.s !== null).sort((a, b) => b.s - a.s);
+    updateVoiceNote();
+  }
+  function pickVoice() {
+    const best = zhVoices.find(x => x.s > -50);
+    return best ? best.v : null;
+  }
+  const prepText = (t) => { t = String(t).trim(); return /[。！？!?.]$/.test(t) ? t : t + "。"; };
+  function speak(text) {
+    if (!soundOn || !synth) return;
+    if (!pickVoice() && !voicesSeen) { refreshVoices(); voicesSeen = true; updateVoiceNote(); }   // first attempt with no Chinese voice: warn
+    try {
+      synth.cancel();
+      clearTimeout(speak._t);
+      const u = new SpeechSynthesisUtterance(prepText(text));
+      const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "zh-CN";
+      u.rate = slowMode ? 0.7 : 0.92; u.pitch = 1; u.volume = 1;
+      window.__lastUtterance = u;                         // keep a reference: Chrome can drop it mid-speech otherwise
+      speak._t = setTimeout(() => synth.speak(u), 70);    // cancel() followed at once by speak() can swallow the sound
+    } catch (e) { /* ignore */ }
+  }
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+  function shakeEl(el) { el.classList.remove("shake"); void el.getBoundingClientRect(); el.classList.add("shake"); }
+
+  // ---------- coins (saved in the browser; the object is ready to hold shop items later) ----------
+  const COIN = '<svg class="ci" viewBox="0 0 32 32" aria-hidden="true"><use href="#coin"/></svg>';
+  const SAVE_KEY = "zhGameV1";
+  let save = { coins: 0 };
+  try {
+    const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    if (raw && typeof raw === "object") save = Object.assign(save, raw);
+    if (!Number.isFinite(save.coins) || save.coins < 0) save.coins = 0;
+  } catch (_) {}
+  const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (_) {} };
+  const drawCoins = () => { $("coinNum").textContent = save.coins; };
+  let audioCtx = null;
+  function ding() {
+    if (!soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(988, t); o.frequency.setValueAtTime(1319, t + 0.09);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.36);
+    } catch (_) { /* no audio: fine */ }
+  }
+  // 2 coins for an answer given right away, 1 coin if it took more than one try
+  const reward = (tries) => tries === 0 ? 2 : 1;
+  function earn(n) {
+    save.coins += n; persist(); drawCoins();
+    const p = $("coinPlus"); p.textContent = "+" + n; p.classList.remove("go"); void p.offsetWidth; p.classList.add("go");
+    const b = $("coinBox"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+    ding();
+    return n;
+  }
+  let clearArmed = false, clearTimer = null;
+  const disarmClear = () => { clearArmed = false; clearTimeout(clearTimer); $("coinClear").textContent = "Очистить баланс"; $("coinClear").classList.remove("danger"); };
+  $("coinClear").onclick = () => {
+    if (!clearArmed) {
+      clearArmed = true; $("coinClear").textContent = "Точно очистить?"; $("coinClear").classList.add("danger");
+      clearTimer = setTimeout(disarmClear, 3000); return;
+    }
+    disarmClear(); save.coins = 0; persist(); drawCoins(); toast("Баланс очищен");
+  };
+  drawCoins();
+
+  // =====================================================================
+  //                           CAT GAME
+  // =====================================================================
+  const ZONES = [
+    { id:"on",     obj:"桌子", objPy:"zhuōzi", objRu:"стол",    key:"上",   keyPy:"shàng",   keyRu:"на, сверху",     ru:"на столе",      rect:[400,195,620,320], snap:[510,290], layer:"B", scale:1.35 },
+    { id:"under",  obj:"椅子", objPy:"yǐzi",   objRu:"стул",    key:"下",   keyPy:"xià",     keyRu:"под, снизу",     ru:"под стулом",    rect:[735,360,832,440], snap:[780,418], layer:"A", scale:1.0 },
+    { id:"in",     obj:"书包", objPy:"shūbāo", objRu:"рюкзак",  key:"里",   keyPy:"lǐ",      keyRu:"в, внутри",      ru:"в рюкзаке",     rect:[850,320,945,440], snap:[891,396], layer:"A", scale:0.95 },
+    { id:"left",   obj:"桌子", objPy:"zhuōzi", objRu:"стол",    key:"左边", keyPy:"zuǒbian", keyRu:"слева",          ru:"слева от стола",  rect:[335,400,415,540], snap:[372,476], layer:"B", scale:1.4 },
+    { id:"right",  obj:"桌子", objPy:"zhuōzi", objRu:"стол",    key:"右边", keyPy:"yòubian", keyRu:"справа",         ru:"справа от стола", rect:[610,400,730,540], snap:[672,476], layer:"B", scale:1.4 },
+    { id:"beside", obj:"我",   objPy:"wǒ",     objRu:"я",       key:"旁边", keyPy:"pángbiān",keyRu:"рядом, около, сбоку", ru:"рядом со мной", rect:[238,400,332,540], snap:[292,476], layer:"B", scale:1.4 },
+    { id:"front",  obj:"门",   objPy:"mén",    objRu:"дверь",   key:"前面", keyPy:"qiánmiàn",keyRu:"перед, спереди", ru:"перед дверью",  rect:[10,421,190,540],  snap:[92,490],  layer:"B", scale:1.4 },
+    { id:"behind", obj:"门",   objPy:"mén",    objRu:"дверь",   key:"后面", keyPy:"hòumiàn", keyRu:"за, сзади",      ru:"за дверью",     rect:[100,325,185,420], snap:[142,396], layer:"A", scale:1.2 },
+  ];
+  const byId = Object.fromEntries(ZONES.map(z => [z.id, z]));
+  const GROUPS = [
+    { title:"1. Верх и низ",       ids:["on","under"] },
+    { title:"2. Внутри",           ids:["in"] },
+    { title:"3. Сбоку и рядом",    ids:["left","right","beside"] },
+    { title:"4. Перед и за",       ids:["front","behind"] },
+  ];
+  const full = (z) => z.obj + z.key;
+  const fullPy = (z) => z.objPy + " " + z.keyPy;
+  const START = [500, 492];
+  const FREE_S = 1.4;
+
+  const svg = $("scene"), catEl = $("cat");
+  const layerA = $("layerA"), layerB = $("layerB"), layerDrag = $("layerDrag");
+  const zonesG = $("zones");
+  const zoneEls = {};
+  ZONES.forEach(z => {
+    const [x1,y1,x2,y2] = z.rect;
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", x1); r.setAttribute("y", y1);
+    r.setAttribute("width", x2-x1); r.setAttribute("height", y2-y1);
+    r.setAttribute("rx", 14); r.setAttribute("class", "zone");
+    zonesG.appendChild(r); zoneEls[z.id] = r;
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", (x1+x2)/2); t.setAttribute("y", y1 + 22);
+    t.setAttribute("text-anchor", "middle"); t.setAttribute("class", "zlabel zh");
+    t.textContent = full(z);
+    zonesG.appendChild(t);
+  });
+  zonesG.style.pointerEvents = "none";
+
+  const cat = { x: START[0], y: START[1], s: FREE_S, zone: null };
+  function setCat(x, y, s = cat.s) {
+    cat.x = x; cat.y = y; cat.s = s;
+    catEl.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})`);
+  }
+  layerB.appendChild(catEl); setCat(START[0], START[1], FREE_S);
+
+  const zoneAt = (cx, cy) => ZONES.find(z => cx >= z.rect[0] && cx <= z.rect[2] && cy >= z.rect[1] && cy <= z.rect[3]) || null;
+  const highlight = (z) => ZONES.forEach(q => zoneEls[q.id].classList.toggle("hot", !!z && q.id === z.id));
+  function toSvg(e) {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  let anim = null;
+  function moveTo(x, y, done, hop = 36, s2 = FREE_S) {
+    if (anim) cancelAnimationFrame(anim);
+    const x0 = cat.x, y0 = cat.y, s0 = cat.s, t0 = performance.now(), dur = 520;
+    layerDrag.appendChild(catEl);
+    (function step(now) {
+      const t = Math.min(1, (now - t0) / dur);
+      const e = t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+      setCat(x0 + (x - x0) * e, y0 + (y - y0) * e - Math.sin(Math.PI * t) * hop, s0 + (s2 - s0) * e);
+      if (t < 1) anim = requestAnimationFrame(step);
+      else { anim = null; setCat(x, y, s2); done && done(); }
+    })(performance.now());
+  }
+  function placeInZone(z) {
+    moveTo(z.snap[0], z.snap[1], () => {
+      (z.layer === "A" ? layerA : layerB).appendChild(catEl);
+      cat.zone = z; onPlaced(z);
+    }, 36, z.scale);
+  }
+  function resetCat(cb) {
+    cat.zone = null;
+    moveTo(START[0], START[1], () => { layerB.appendChild(catEl); cb && cb(); }, 24, FREE_S);
+  }
+
+  let dragging = false, off = { x: 0, y: 0 };
+  catEl.addEventListener("pointerdown", (e) => {
+    if (anim) { cancelAnimationFrame(anim); anim = null; }
+    setCat(cat.x, cat.y, FREE_S);
+    const p = toSvg(e); off = { x: p.x - cat.x, y: p.y - cat.y };
+    // re-parent first: moving a node in the DOM drops pointer capture
+    layerDrag.appendChild(catEl); cat.zone = null;
+    dragging = true; catEl.classList.add("grab");
+    try { catEl.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault();
+  });
+  catEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const p = toSvg(e);
+    const nx = Math.min(930, Math.max(35, p.x - off.x));
+    const ny = Math.min(535, Math.max(100, p.y - off.y));
+    setCat(nx, ny);
+    highlight(zoneAt(nx, ny - 40));
+  });
+  const endDrag = (e) => {
+    if (!dragging) return;
+    dragging = false; catEl.classList.remove("grab");
+    try { catEl.releasePointerCapture(e.pointerId); } catch (_) {}
+    highlight(null);
+    const z = zoneAt(cat.x, cat.y - 40);
+    if (z) placeInZone(z);
+    else { layerB.appendChild(catEl); onFree(); }
+  };
+  catEl.addEventListener("pointerup", endDrag);
+  catEl.addEventListener("pointercancel", endDrag);
+  catEl.addEventListener("lostpointercapture", endDrag);
+
+  function showPhrase(z) {
+    $("exEmpty").classList.add("hidden"); $("exBody").classList.remove("hidden");
+    $("phHan").innerHTML = `<span class="o">${z.obj}</span><span class="k">${z.key}</span>`;
+    $("phPy").innerHTML = `${z.objPy} <span class="k">${z.keyPy}</span>`;
+    $("phRu").textContent = "Кот " + z.ru;
+    $("phTip").innerHTML = `<b class="zh o">${z.obj}</b> (${z.objRu}) + <b class="zh k">${z.key}</b> (${z.keyRu})`;
+    $("posText").textContent = `Кот ${z.ru}: ${full(z)} (${fullPy(z)})`;
+    speak(full(z));
+  }
+  $("bSay").onclick = () => { if (cat.zone) speak(full(cat.zone)); };
+
+  const groupsEl = $("groups");
+  GROUPS.forEach(g => {
+    const box = document.createElement("div"); box.className = "group";
+    box.innerHTML = `<h4>${g.title}</h4>`;
+    g.ids.forEach(id => {
+      const z = byId[id];
+      const b = document.createElement("button"); b.className = "card"; b.type = "button";
+      b.innerHTML = `<div class="big zh">${z.key}<small class="py">${z.keyPy}</small></div>
+        <div class="mean">${z.keyRu}</div>
+        <div class="ex"><span class="zh"><span class="o">${z.obj}</span><span class="k">${z.key}</span></span>
+        <span class="py">(${fullPy(z)})</span> — ${z.ru}</div>`;
+      b.addEventListener("click", () => {
+        b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash");
+        if (catMode === "game") { speak(z.key); toast(`${z.key} — ${z.keyRu}`); return; }
+        placeInZone(z);
+        window.scrollTo({ top: Math.max(0, $("scene").getBoundingClientRect().top + window.scrollY - 70), behavior: "smooth" });
+      });
+      box.appendChild(b);
+    });
+    groupsEl.appendChild(box);
+  });
+
+  let catMode = "explore";
+  const G = { order: [], i: 0, first: 0, tries: 0, busy: false, over: true, coins: 0 };
+  const target = () => G.order[G.i];
+
+  function renderTask() {
+    const z = target();
+    $("gProg").textContent = `Задание ${G.i + 1} из ${G.order.length}`;
+    $("gScore").textContent = `Верно с первого раза: ${G.first}`;
+    $("gBar").style.width = (G.i / G.order.length * 100) + "%";
+    $("gHan").innerHTML = `猫在<span class="o">${z.obj}</span><span class="k">${z.key}</span>。`;
+    $("gPy").innerHTML = `Māo zài ${z.objPy} <span class="k">${z.keyPy}</span>.`;
+    $("gRu").textContent = `Кот ${z.ru}.`;
+    $("gRu").classList.add("hidden"); $("bRu").textContent = "Показать перевод";
+    $("gFb").className = "fb"; $("gFb").textContent = "";
+    G.tries = 0; G.busy = false;
+    $("posText").textContent = "Поставь кота так, чтобы предложение стало правдой.";
+  }
+  function startGame() {
+    G.order = shuffle(ZONES); G.i = 0; G.first = 0; G.coins = 0; G.over = false;
+    $("gStart").classList.add("hidden"); $("gEnd").classList.add("hidden"); $("gPlay").classList.remove("hidden");
+    resetCat(); renderTask();
+  }
+  function handleGuess(z) {
+    if (G.busy || G.over) return;
+    const t = target(), fb = $("gFb");
+    if (z.id === t.id) {
+      G.busy = true;
+      if (G.tries === 0) G.first++;
+      const c = earn(reward(G.tries)); G.coins += c;
+      fb.className = "fb ok";
+      fb.innerHTML = `<b class="zh">对！</b> Верно: кот ${t.ru}. +${c} ${COIN}`;
+      speak("猫在" + full(t));
+      $("gScore").textContent = `Верно с первого раза: ${G.first}`;
+      $("gBar").style.width = ((G.i + 1) / G.order.length * 100) + "%";
+      setTimeout(() => {
+        G.i++;
+        if (G.i >= G.order.length) return finishGame();
+        resetCat(renderTask);
+      }, 1500);
+    } else {
+      G.tries++;
+      fb.className = "fb bad";
+      fb.innerHTML = `<b class="zh">不对。</b> Сейчас кот ${z.ru} (<span class="zh">${full(z)}</span>). Попробуй ещё раз!`;
+      shakeEl(svg);
+    }
+  }
+  function finishGame() {
+    G.over = true;
+    $("gPlay").classList.add("hidden"); $("gEnd").classList.remove("hidden");
+    const n = G.order.length;
+    $("gStars").textContent = starStr(G.first, n);
+    $("gEndText").innerHTML = `Верно с первого раза: <b>${G.first} из ${n}</b>. <span class="zh">太棒了！</span> (tài bàng le — отлично!) Монет: <b>+${G.coins}</b> ${COIN}`;
+    $("posText").textContent = "Игра окончена. Можно сыграть ещё раз.";
+    resetCat();
+  }
+  $("bStart").onclick = startGame;
+  $("bAgain").onclick = startGame;
+  $("bRu").onclick = () => {
+    const hid = $("gRu").classList.toggle("hidden");
+    $("bRu").textContent = hid ? "Показать перевод" : "Скрыть перевод";
+  };
+  $("bHint").onclick = () => {
+    if (G.over) return;
+    const z = target(), el = zoneEls[z.id];
+    el.classList.remove("pulse"); void el.getBBox(); el.classList.add("pulse");
+    setTimeout(() => el.classList.remove("pulse"), 3200);
+    toast(`Ищи ${z.obj} (${z.objRu}) и слово ${z.key} (${z.keyRu})`);
+  };
+  $("bSay2").onclick = () => { if (!G.over && G.order.length) speak("猫在" + full(target())); };
+
+  function onPlaced(z) { if (catMode === "game") handleGuess(z); else showPhrase(z); }
+  function onFree() {
+    cat.zone = null;
+    if (catMode === "game") toast("Поставь кота рядом с предметом из предложения");
+    else $("posText").textContent = "Кот посреди комнаты. Поставь его рядом со столом, стулом, рюкзаком, дверью или мальчиком.";
+  }
+
+  function setCatMode(m) {
+    catMode = m;
+    $("tabExplore").setAttribute("aria-selected", m === "explore");
+    $("tabGame").setAttribute("aria-selected", m === "game");
+    $("pExplore").classList.toggle("hidden", m !== "explore");
+    $("pGame").classList.toggle("hidden", m !== "game");
+    if (m === "game") {
+      if (G.over) { $("gStart").classList.remove("hidden"); $("gPlay").classList.add("hidden"); $("gEnd").classList.add("hidden"); }
+      resetCat();
+    } else {
+      resetCat(() => {
+        $("exBody").classList.add("hidden"); $("exEmpty").classList.remove("hidden");
+        $("posText").textContent = "Кот ждёт тебя на полу. Потяни его мышкой или пальцем.";
+      });
+    }
+  }
+  $("tabExplore").onclick = () => setCatMode("explore");
+  $("tabGame").onclick = () => setCatMode("game");
+
+  $("tZones").onclick = (e) => {
+    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", on);
+    e.currentTarget.textContent = on ? "Скрыть зоны" : "Показать зоны";
+    svg.classList.toggle("zones-on", on);
+  };
+  $("tWide").onclick = (e) => {
+    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", on);
+    e.currentTarget.textContent = on ? "Обычно" : "Крупно";
+    $("stage").classList.toggle("wide", on);
+  };
+
+  // =====================================================================
+  //                           DATES: DATA
+  // =====================================================================
+  const DIG = ["零","一","二","三","四","五","六","七","八","九"];
+  const DPY = ["líng","yī","èr","sān","sì","wǔ","liù","qī","bā","jiǔ"];
+  const zhNum = (n) => n < 10 ? DIG[n] : n === 10 ? "十" : n < 20 ? "十" + DIG[n - 10] : DIG[Math.floor(n / 10)] + "十" + (n % 10 ? DIG[n % 10] : "");
+  const pyNum = (n) => {
+    const s = n < 10 ? DPY[n] : n === 10 ? "shí" : n < 20 ? "shí" + DPY[n - 10] : DPY[Math.floor(n / 10)] + "shí" + (n % 10 ? DPY[n % 10] : "");
+    return s.replace("shíèr", "shí'èr");
+  };
+  const MONTH_NOM = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+  const MONTH_GEN = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  const DAYS_IN = [31,28,31,30,31,30,31,31,30,31,30,31];
+  const WD = [
+    { zh:"星期一", py:"xīngqī yī",  ru:"понедельник", sh:"Пн", ch:"一" },
+    { zh:"星期二", py:"xīngqī èr",  ru:"вторник",     sh:"Вт", ch:"二" },
+    { zh:"星期三", py:"xīngqī sān", ru:"среда",       sh:"Ср", ch:"三" },
+    { zh:"星期四", py:"xīngqī sì",  ru:"четверг",     sh:"Чт", ch:"四" },
+    { zh:"星期五", py:"xīngqī wǔ",  ru:"пятница",     sh:"Пт", ch:"五" },
+    { zh:"星期六", py:"xīngqī liù", ru:"суббота",     sh:"Сб", ch:"六" },
+    { zh:"星期天", py:"xīngqī tiān",ru:"воскресенье", sh:"Вс", ch:"日" },
+  ];
+  const WORDS = [
+    { zh:"今天", py:"jīntiān", ru:"сегодня" },
+    { zh:"明天", py:"míngtiān", ru:"завтра" },
+    { zh:"昨天", py:"zuótiān", ru:"вчера" },
+    { zh:"年",   py:"nián",    ru:"год" },
+    { zh:"月",   py:"yuè",     ru:"месяц" },
+    { zh:"号",   py:"hào",     ru:"число (в речи)" },
+    { zh:"星期", py:"xīngqī",  ru:"неделя" },
+    { zh:"几",   py:"jǐ",      ru:"сколько / какой" },
+  ];
+  const mkNum = (n) => ({ key: "n" + n, zh: zhNum(n), py: pyNum(n), ru: String(n) });
+  const mkMonth = (m) => ({ key: "m" + m, zh: zhNum(m) + "月", py: pyNum(m) + " yuè", ru: `${MONTH_NOM[m-1]} (${m})` });
+  const mkDate = (m, d) => ({ key: `d${m}-${d}`, m, d, zh: zhNum(m) + "月" + zhNum(d) + "号", py: `${pyNum(m)} yuè ${pyNum(d)} hào`, ru: `${d} ${MONTH_GEN[m-1]}` });
+  const mkWd = (i) => ({ key: "w" + i, zh: WD[i].zh, py: WD[i].py, ru: WD[i].ru });
+  const POOLS = {
+    numbers:  () => mkNum(1 + randInt(31)),
+    months:   () => mkMonth(1 + randInt(12)),
+    weekdays: () => mkWd(randInt(7)),
+    dates:    () => { const m = 1 + randInt(12); return mkDate(m, 1 + randInt(DAYS_IN[m-1])); },
+    words:    () => { const w = WORDS[randInt(WORDS.length)]; return { key: "x" + w.zh, ...w }; },
+  };
+  const TOPICS = [
+    { id:"mix",      label:"Всё вместе" },
+    { id:"numbers",  label:"Числа 1–31" },
+    { id:"months",   label:"Месяцы" },
+    { id:"weekdays", label:"Дни недели" },
+    { id:"dates",    label:"Даты" },
+    { id:"words",    label:"Слова: сегодня, завтра…" },
+  ];
+  const MIX = ["numbers","months","weekdays","dates","words"];
+
+  function distractors(pool, item, n) {
+    const out = [], keys = new Set([item.key, ...[]]);
+    let guard = 0;
+    while (out.length < n && guard++ < 400) {
+      let c;
+      if (pool === "dates" && Math.random() < 0.65) {
+        if (Math.random() < 0.5) c = mkDate(item.m, 1 + randInt(DAYS_IN[item.m - 1]));
+        else { const m2 = 1 + randInt(12); c = mkDate(m2, Math.min(item.d, DAYS_IN[m2 - 1])); }
+      } else c = POOLS[pool]();
+      if (keys.has(c.key)) continue;
+      keys.add(c.key); out.push(c);
+    }
+    return out;
+  }
+  function topicChips(box, state) {
+    box.innerHTML = "";
+    TOPICS.forEach(t => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "chip" + (t.id === state.topic ? " sel" : "");
+      b.textContent = t.label; b.dataset.topic = t.id;
+      b.onclick = () => { state.topic = t.id; [...box.children].forEach(c => c.classList.toggle("sel", c === b)); };
+      box.appendChild(b);
+    });
+  }
+  const showOnly = (prefix, which) => {
+    ["Start","Play","End"].forEach(s => $(prefix + s).classList.toggle("hidden", s !== which));
+  };
+
+  // =====================================================================
+  //                           DATES: LEARN CALENDAR
+  // =====================================================================
+  const now = new Date();
+  const TODAY = { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
+  const L = { y: TODAY.y, m: TODAY.m, sel: { ...TODAY } };
+  const wdIndex = (y, m, d) => (new Date(y, m - 1, d).getDay() + 6) % 7;
+  const yearZh = (y) => String(y).split("").map(c => DIG[+c]).join("");
+  const yearPy = (y) => String(y).split("").map(c => DPY[+c]).join(" ");
+  const sameDay = (a, b) => a.y === b.y && a.m === b.m && a.d === b.d;
+  const offsetDay = (k) => { const t = new Date(TODAY.y, TODAY.m - 1, TODAY.d + k); return { y: t.getFullYear(), m: t.getMonth() + 1, d: t.getDate() }; };
+
+  function renderLearn() {
+    $("lcTitle").innerHTML = `<span class="zh">${yearZh(L.y)}年 ${zhNum(L.m)}月</span><small>${MONTH_NOM[L.m-1]} ${L.y}</small>`;
+    const g = $("lcGrid"); g.innerHTML = "";
+    WD.forEach(w => { const h = document.createElement("div"); h.className = "h"; h.innerHTML = `<span class="zh">${w.ch}</span><small>${w.sh}</small>`; g.appendChild(h); });
+    const first = wdIndex(L.y, L.m, 1), n = new Date(L.y, L.m, 0).getDate();
+    for (let i = 0; i < first; i++) { const e = document.createElement("div"); e.className = "c empty"; g.appendChild(e); }
+    for (let d = 1; d <= n; d++) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "c"; b.textContent = d; b.dataset.d = d;
+      const cur = { y: L.y, m: L.m, d };
+      if (sameDay(cur, TODAY)) b.classList.add("today");
+      if (sameDay(cur, L.sel)) b.classList.add("sel");
+      b.onclick = () => { L.sel = cur; renderLearn(); renderInfo(true); };
+      g.appendChild(b);
+    }
+  }
+  function selText() {
+    const s = L.sel, w = WD[wdIndex(s.y, s.m, s.d)];
+    return `${yearZh(s.y)}年${zhNum(s.m)}月${zhNum(s.d)}号 ${w.zh}`;
+  }
+  function renderInfo(say) {
+    const s = L.sel, w = WD[wdIndex(s.y, s.m, s.d)];
+    $("lcBig").innerHTML = `<span class="o">${zhNum(s.m)}月</span><span class="k">${zhNum(s.d)}号</span>`;
+    $("lcWd").textContent = w.zh;
+    $("lcPy").innerHTML = `${pyNum(s.m)} yuè <span class="k">${pyNum(s.d)} hào</span>, ${w.py}<br><small>${yearPy(s.y)} nián</small>`;
+    $("lcRu").textContent = `${s.d} ${MONTH_GEN[s.m-1]} ${s.y}, ${w.ru}`;
+    if (say) speak(`${zhNum(s.m)}月${zhNum(s.d)}号 ${w.zh}`);
+  }
+  function renderRel() {
+    const box = $("lcRel"); box.innerHTML = "";
+    [[-1,"昨天","zuótiān","вчера"],[0,"今天","jīntiān","сегодня"],[1,"明天","míngtiān","завтра"]].forEach(([k, zh, py, ru]) => {
+      const dt = offsetDay(k);
+      const b = document.createElement("button"); b.type = "button"; b.className = "relc";
+      b.innerHTML = `<div class="w zh">${zh}</div><div class="py-line">${py}</div><small>${ru}</small><small class="zh">${zhNum(dt.m)}月${zhNum(dt.d)}号</small>`;
+      b.onclick = () => { L.y = dt.y; L.m = dt.m; L.sel = dt; renderLearn(); renderInfo(false); speak(zh); };
+      box.appendChild(b);
+    });
+  }
+  $("lcPrev").onclick = () => { L.m--; if (L.m < 1) { L.m = 12; L.y--; } renderLearn(); };
+  $("lcNext").onclick = () => { L.m++; if (L.m > 12) { L.m = 1; L.y++; } renderLearn(); };
+  $("lcToday").onclick = () => { L.y = TODAY.y; L.m = TODAY.m; L.sel = { ...TODAY }; renderLearn(); renderInfo(true); };
+  $("lcSay").onclick = () => speak(selText());
+
+  // =====================================================================
+  //                           DATES: QUIZ (pick 1 of 4)
+  // =====================================================================
+  const QZ = { topic: "mix", i: 0, total: 10, first: 0, tries: 0, locked: true, used: new Set(), cur: null, coins: 0 };
+  topicChips($("qzTopics"), QZ);
+
+  function makeQuestion() {
+    let pool, dir, item, guard = 0;
+    do {
+      pool = QZ.topic === "mix" ? MIX[randInt(MIX.length)] : QZ.topic;
+      dir = Math.random() < 0.5 ? "zh2ru" : "ru2zh";
+      item = POOLS[pool]();
+    } while (QZ.used.has(item.key + dir) && guard++ < 100);
+    QZ.used.add(item.key + dir);
+    const opts = shuffle([item, ...distractors(pool, item, 3)]);
+    return { pool, dir, item, opts };
+  }
+  function renderQuestion() {
+    const q = QZ.cur = makeQuestion(); QZ.tries = 0; QZ.locked = false;
+    $("qzProg").textContent = `Вопрос ${QZ.i + 1} из ${QZ.total}`;
+    $("qzScore").textContent = `Верно с первого раза: ${QZ.first}`;
+    $("qzBar").style.width = (QZ.i / QZ.total * 100) + "%";
+    $("qzFb").className = "fb"; $("qzFb").textContent = "";
+    $("qzNext").classList.add("hidden");
+    if (q.dir === "zh2ru") {
+      $("qzAsk").textContent = "Что это значит по-русски?";
+      $("qzPrompt").innerHTML = `<div class="phrase zh">${q.item.zh}</div><div class="py-line">${q.item.py}</div>`;
+      $("qzSay").classList.remove("hidden");
+    } else {
+      $("qzAsk").textContent = "Как это будет по-китайски?";
+      $("qzPrompt").innerHTML = `<div class="phrase" style="font-size:clamp(30px,4vw,46px)">${q.item.ru}</div>`;
+      $("qzSay").classList.add("hidden");
+    }
+    const box = $("qzOpts"); box.innerHTML = "";
+    q.opts.forEach(o => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "opt";
+      b.dataset.ok = o.key === q.item.key ? "1" : "0";
+      b.innerHTML = q.dir === "zh2ru" ? `<span>${o.ru}</span>` : `<span class="big zh">${o.zh}</span><span class="py-line">${o.py}</span>`;
+      b.onclick = () => pickAnswer(b, o);
+      box.appendChild(b);
+    });
+  }
+  function pickAnswer(btn, o) {
+    if (QZ.locked) return;
+    const q = QZ.cur, it = q.item, fb = $("qzFb");
+    if (o.key === it.key) {
+      QZ.locked = true; btn.classList.add("ok");
+      if (QZ.tries === 0) QZ.first++;
+      const c = earn(reward(QZ.tries)); QZ.coins += c;
+      fb.className = "fb ok";
+      fb.innerHTML = `<b class="zh">对！</b> <span class="zh">${it.zh}</span> (${it.py}) — ${it.ru} &nbsp; +${c} ${COIN}`;
+      $("qzScore").textContent = `Верно с первого раза: ${QZ.first}`;
+      $("qzBar").style.width = ((QZ.i + 1) / QZ.total * 100) + "%";
+      speak(it.zh);
+      $("qzNext").textContent = QZ.i + 1 >= QZ.total ? "Результат →" : "Дальше →";
+      $("qzNext").classList.remove("hidden");
+    } else {
+      QZ.tries++; btn.classList.add("no"); btn.disabled = true; shakeEl(btn);
+      fb.className = "fb bad"; fb.innerHTML = `<b class="zh">不对。</b> Попробуй ещё раз!`;
+    }
+  }
+  $("qzNext").onclick = () => {
+    QZ.i++;
+    if (QZ.i >= QZ.total) {
+      showOnly("qz", "End");
+      $("qzStars").textContent = starStr(QZ.first, QZ.total);
+      $("qzEndText").innerHTML = `Верно с первого раза: <b>${QZ.first} из ${QZ.total}</b>. <span class="zh">太棒了！</span> (tài bàng le — отлично!) Монет: <b>+${QZ.coins}</b> ${COIN}`;
+    } else renderQuestion();
+  };
+  $("qzSay").onclick = () => { if (QZ.cur) speak(QZ.cur.item.zh); };
+  const quizStart = () => { QZ.i = 0; QZ.first = 0; QZ.coins = 0; QZ.used = new Set(); showOnly("qz", "Play"); renderQuestion(); };
+  $("qzGo").onclick = quizStart;
+  $("qzAgain").onclick = () => showOnly("qz", "Start");
+
+  // =====================================================================
+  //                           DATES: MATCH
+  // =====================================================================
+  const MT = { topic: "mix", items: [], sel: null, done: 0, mist: 0, lock: false, tries: {}, coins: 0 };
+  topicChips($("mtTopics"), MT);
+  function mtPick() {
+    const pools = MT.topic === "mix" ? shuffle(MIX) : [MT.topic];
+    const out = [], zhs = new Set(), rus = new Set();
+    let guard = 0;
+    while (out.length < 6 && guard++ < 500) {
+      const pool = MT.topic === "mix" ? pools[out.length % pools.length] : MT.topic;
+      const it = POOLS[pool]();
+      if (zhs.has(it.zh) || rus.has(it.ru)) continue;
+      zhs.add(it.zh); rus.add(it.ru); out.push(it);
+    }
+    return out;
+  }
+  function mtRender() {
+    const L_ = $("mtL"), R_ = $("mtR"); L_.innerHTML = ""; R_.innerHTML = "";
+    shuffle(MT.items).forEach(it => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "mcard"; b.dataset.id = it.key; b.dataset.side = "l";
+      b.innerHTML = `<span class="big zh">${it.zh}</span><span class="py-line">${it.py}</span>`;
+      b.onclick = () => mtClick("l", it, b); L_.appendChild(b);
+    });
+    shuffle(MT.items).forEach(it => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "mcard"; b.dataset.id = it.key; b.dataset.side = "r";
+      b.textContent = it.ru; b.onclick = () => mtClick("r", it, b); R_.appendChild(b);
+    });
+  }
+  function mtStatus() {
+    $("mtProg").textContent = `Найдено пар: ${MT.done} из ${MT.items.length}`;
+    $("mtMist").textContent = `Ошибок: ${MT.mist}`;
+    $("mtBar").style.width = (MT.done / MT.items.length * 100) + "%";
+  }
+  function mtClick(side, it, el) {
+    if (MT.lock) return;
+    if (side === "l") speak(it.zh);
+    const prev = MT.sel;
+    if (!prev || prev.side === side) {
+      if (prev) prev.el.classList.remove("sel");
+      MT.sel = { side, it, el }; el.classList.add("sel"); return;
+    }
+    prev.el.classList.remove("sel"); MT.sel = null;
+    if (prev.it.key === it.key) {
+      prev.el.classList.add("done"); el.classList.add("done"); MT.done++; MT.coins += earn(reward(MT.tries[it.key] || 0)); mtStatus();
+      if (side === "r") speak(it.zh);
+      if (MT.done >= MT.items.length) setTimeout(() => {
+        showOnly("mt", "End");
+        const good = Math.max(0, MT.items.length - MT.mist);
+        $("mtStars").textContent = MT.mist <= 1 ? "⭐⭐⭐" : MT.mist <= 3 ? "⭐⭐☆" : "⭐☆☆";
+        $("mtEndText").innerHTML = `Все ${MT.items.length} пар найдены! Ошибок: <b>${MT.mist}</b>. <span class="zh">太棒了！</span> Монет: <b>+${MT.coins}</b> ${COIN}`;
+      }, 700);
+    } else {
+      MT.mist++; MT.lock = true; mtStatus();
+      MT.tries[it.key] = (MT.tries[it.key] || 0) + 1; MT.tries[prev.it.key] = (MT.tries[prev.it.key] || 0) + 1;
+      prev.el.classList.add("wrong"); el.classList.add("wrong");
+      setTimeout(() => { prev.el.classList.remove("wrong"); el.classList.remove("wrong"); MT.lock = false; }, 550);
+    }
+  }
+  function mtStart() { MT.items = mtPick(); MT.sel = null; MT.done = 0; MT.mist = 0; MT.lock = false; MT.tries = {}; MT.coins = 0; showOnly("mt", "Play"); mtRender(); mtStatus(); }
+  $("mtGo").onclick = mtStart;
+  $("mtAgain").onclick = () => showOnly("mt", "Start");
+
+  // =====================================================================
+  //                           DATES: BUILD A DATE
+  // =====================================================================
+  const BD = { i: 0, total: 8, first: 0, tries: 0, locked: true, target: [], tiles: [], slots: [], info: null, coins: 0 };
+  const EXTRA = ["一","二","三","四","五","六","七","八","九","十","月","号","天"];
+  function bdMakeTask() {
+    const r = Math.random();
+    let zh, py, ru;
+    if (r < 0.6) { const m = 1 + randInt(12), d = 1 + randInt(DAYS_IN[m-1]); const it = mkDate(m, d); zh = it.zh; py = it.py; ru = it.ru; }
+    else if (r < 0.85) { const w = WD[randInt(7)]; zh = w.zh; py = w.py; ru = w.ru; }
+    else { const it = mkMonth(1 + randInt(12)); zh = it.zh; py = it.py; ru = it.ru.replace(/ \(\d+\)/, ""); }
+    return { zh, py, ru };
+  }
+  function bdRender() {
+    const t = BD.info = bdMakeTask();
+    BD.target = t.zh.split(""); BD.slots = Array(BD.target.length).fill(null); BD.tries = 0; BD.locked = false;
+    const spare = shuffle(EXTRA.filter(c => !BD.target.includes(c))).slice(0, 3);
+    BD.tiles = shuffle([...BD.target, ...spare]);
+    $("bdProg").textContent = `Задание ${BD.i + 1} из ${BD.total}`;
+    $("bdScore").textContent = `Верно с первого раза: ${BD.first}`;
+    $("bdBar").style.width = (BD.i / BD.total * 100) + "%";
+    $("bdPrompt").textContent = t.ru; $("bdPrompt").dataset.target = t.zh;
+    $("bdFb").className = "fb"; $("bdFb").textContent = ""; $("bdNext").classList.add("hidden");
+    bdDraw();
+  }
+  function bdDraw(good) {
+    const sl = $("bdSlots"); sl.innerHTML = "";
+    BD.slots.forEach((ti, k) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "slot" + (ti !== null ? " f" : "") + (good ? " good" : "");
+      b.textContent = ti !== null ? BD.tiles[ti] : "";
+      b.setAttribute("aria-label", ti !== null ? "Убрать " + BD.tiles[ti] : "Пустая ячейка");
+      b.onclick = () => { if (BD.locked || ti === null) return; BD.slots[k] = null; bdDraw(); };
+      sl.appendChild(b);
+    });
+    const tl = $("bdTiles"); tl.innerHTML = "";
+    BD.tiles.forEach((ch, i) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "tile" + (BD.slots.includes(i) ? " used" : "");
+      b.textContent = ch; b.dataset.i = i; b.dataset.ch = ch;
+      b.onclick = () => bdPlace(i);
+      tl.appendChild(b);
+    });
+  }
+  function bdPlace(i) {
+    if (BD.locked) return;
+    const k = BD.slots.indexOf(null); if (k < 0) return;
+    BD.slots[k] = i; bdDraw();
+    if (BD.slots.indexOf(null) < 0) bdCheck();
+  }
+  function bdCheck() {
+    const got = BD.slots.map(i => BD.tiles[i]).join(""), t = BD.info, fb = $("bdFb");
+    if (got === t.zh) {
+      BD.locked = true; if (BD.tries === 0) BD.first++;
+      const c = earn(reward(BD.tries)); BD.coins += c;
+      bdDraw(true);
+      fb.className = "fb ok"; fb.innerHTML = `<b class="zh">对！</b> <span class="zh">${t.zh}</span> (${t.py}) — ${t.ru} &nbsp; +${c} ${COIN}`;
+      $("bdScore").textContent = `Верно с первого раза: ${BD.first}`;
+      $("bdBar").style.width = ((BD.i + 1) / BD.total * 100) + "%";
+      speak(t.zh);
+      $("bdNext").textContent = BD.i + 1 >= BD.total ? "Результат →" : "Дальше →";
+      $("bdNext").classList.remove("hidden");
+    } else {
+      BD.tries++; BD.locked = true; shakeEl($("bdSlots"));
+      fb.className = "fb bad"; fb.innerHTML = `<b class="zh">不对。</b> Порядок не тот. Попробуй ещё раз!`;
+      setTimeout(() => { BD.slots = Array(BD.target.length).fill(null); BD.locked = false; bdDraw(); }, 700);
+    }
+  }
+  $("bdClear").onclick = () => { if (BD.locked) return; BD.slots = Array(BD.target.length).fill(null); bdDraw(); };
+  $("bdHint").onclick = () => {
+    if (BD.locked) return;
+    // find first wrong slot position; hint the right tile for it
+    let k = 0; while (k < BD.slots.length && BD.slots[k] !== null && BD.tiles[BD.slots[k]] === BD.target[k]) k++;
+    if (k >= BD.slots.length) return;
+    if (BD.slots[k] !== null) { BD.slots = BD.slots.map((v, j) => j >= k ? null : v); bdDraw(); }
+    const need = BD.target[k];
+    const tile = [...$("bdTiles").children].find(el => el.dataset.ch === need && !el.classList.contains("used"));
+    if (tile) { tile.classList.add("hint"); setTimeout(() => tile.classList.remove("hint"), 2600); }
+    toast(`Следующий иероглиф: ${need}`);
+  };
+  $("bdNext").onclick = () => {
+    BD.i++;
+    if (BD.i >= BD.total) {
+      showOnly("bd", "End");
+      $("bdStars").textContent = starStr(BD.first, BD.total);
+      $("bdEndText").innerHTML = `Верно с первого раза: <b>${BD.first} из ${BD.total}</b>. <span class="zh">太棒了！</span> Монет: <b>+${BD.coins}</b> ${COIN}`;
+    } else bdRender();
+  };
+  $("bdGo").onclick = () => { BD.i = 0; BD.first = 0; BD.coins = 0; showOnly("bd", "Play"); bdRender(); };
+  $("bdAgain").onclick = () => { BD.i = 0; BD.first = 0; BD.coins = 0; showOnly("bd", "Play"); bdRender(); };
+
+  // =====================================================================
+  //                           DATES: FIND ON CALENDAR
+  // =====================================================================
+  const CF = { i: 0, total: 8, first: 0, tries: 0, locked: true, tasks: [], y: TODAY.y, m: 1, coins: 0 };
+  function cfGrid() {
+    const g = $("cfGrid"); g.innerHTML = "";
+    WD.forEach((w, i) => {
+      const h = document.createElement("button"); h.type = "button"; h.className = "h"; h.dataset.wd = i;
+      h.innerHTML = `<span class="zh">${w.ch}</span><small>星期</small>`;
+      h.onclick = () => cfAnswer("wd", i, h); g.appendChild(h);
+    });
+    const first = wdIndex(CF.y, CF.m, 1), n = new Date(CF.y, CF.m, 0).getDate();
+    for (let i = 0; i < first; i++) { const e = document.createElement("div"); e.className = "c empty"; g.appendChild(e); }
+    for (let d = 1; d <= n; d++) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "c"; b.textContent = d; b.dataset.d = d;
+      b.onclick = () => cfAnswer("day", d, b); g.appendChild(b);
+    }
+  }
+  function cfTask() {
+    const t = CF.cur = CF.tasks[CF.i]; CF.tries = 0; CF.locked = false;
+    $("cfProg").textContent = `Задание ${CF.i + 1} из ${CF.total}`;
+    $("cfScore").textContent = `Верно с первого раза: ${CF.first}`;
+    $("cfBar").style.width = (CF.i / CF.total * 100) + "%";
+    const zh = t.kind === "day" ? zhNum(t.v) + "号" : WD[t.v].zh;
+    const py = t.kind === "day" ? pyNum(t.v) + " hào" : WD[t.v].py;
+    const ru = t.kind === "day" ? `Найди число ${t.v}.` : `Найди день недели: ${WD[t.v].ru}.`;
+    t.zh = zh;
+    $("cfPrompt").innerHTML = `找到 <span style="color:var(--key)">${zh}</span>`; $("cfPrompt").dataset.kind = t.kind; $("cfPrompt").dataset.v = t.v;
+    $("cfPy").innerHTML = `zhǎodào ${py}`;
+    $("cfRu").textContent = ru; $("cfRu").classList.add("hidden"); $("cfTr").textContent = "Показать перевод";
+    $("cfFb").className = "fb"; $("cfFb").textContent = "";
+    [...$("cfGrid").children].forEach(el => el.classList.remove("ok", "no"));
+  }
+  function cfAnswer(kind, v, el) {
+    if (CF.locked) return;
+    const t = CF.cur, fb = $("cfFb");
+    if (kind === t.kind && v === t.v) {
+      CF.locked = true; el.classList.add("ok"); if (CF.tries === 0) CF.first++;
+      const c = earn(reward(CF.tries)); CF.coins += c;
+      fb.className = "fb ok"; fb.innerHTML = `<b class="zh">对！</b> <span class="zh">${t.zh}</span> — ${t.kind === "day" ? t.v : WD[t.v].ru} &nbsp; +${c} ${COIN}`;
+      $("cfScore").textContent = `Верно с первого раза: ${CF.first}`;
+      $("cfBar").style.width = ((CF.i + 1) / CF.total * 100) + "%";
+      speak(t.zh);
+      setTimeout(() => {
+        CF.i++;
+        if (CF.i >= CF.total) {
+          showOnly("cf", "End");
+          $("cfStars").textContent = starStr(CF.first, CF.total);
+          $("cfEndText").innerHTML = `Верно с первого раза: <b>${CF.first} из ${CF.total}</b>. <span class="zh">太棒了！</span> Монет: <b>+${CF.coins}</b> ${COIN}`;
+        } else cfTask();
+      }, 1100);
+    } else {
+      CF.tries++; el.classList.add("no"); shakeEl(el);
+      fb.className = "fb bad"; fb.innerHTML = `<b class="zh">不对。</b> Попробуй ещё раз!`;
+    }
+  }
+  function cfStart() {
+    CF.m = 1 + randInt(12); CF.i = 0; CF.first = 0; CF.coins = 0;
+    const days = new Date(CF.y, CF.m, 0).getDate();
+    const ds = shuffle([...Array(days).keys()].map(k => k + 1)).slice(0, 5).map(v => ({ kind: "day", v }));
+    const ws = shuffle([0,1,2,3,4,5,6]).slice(0, 3).map(v => ({ kind: "wd", v }));
+    CF.tasks = shuffle([...ds, ...ws]);
+    $("cfMonth").innerHTML = `<span class="zh">${yearZh(CF.y)}年 ${zhNum(CF.m)}月</span> — ${MONTH_NOM[CF.m-1]} ${CF.y}`;
+    showOnly("cf", "Play"); cfGrid(); cfTask();
+  }
+  $("cfGo").onclick = cfStart; $("cfAgain").onclick = cfStart;
+  $("cfSay").onclick = () => { if (CF.cur) speak("找到" + CF.cur.zh); };
+  $("cfTr").onclick = () => { const h = $("cfRu").classList.toggle("hidden"); $("cfTr").textContent = h ? "Показать перевод" : "Скрыть перевод"; };
+
+  // =====================================================================
+  //                           TONES
+  // =====================================================================
+  // Chao tone letters: 5 = high ... 1 = low. pts = the contour drawn on a 100x64 canvas.
+  const TONES = [
+    { n:1, mark:"ā", name:"ровный",  sub:"самолёт летит ровно",     color:"#e03131", lv:[5,5],   pts:[[10,14],[90,14]], dur:800 },
+    { n:2, mark:"á", name:"вверх",   sub:"лифт едет вверх",         color:"#2f9e44", lv:[3,5],   pts:[[10,42],[90,14]], dur:700 },
+    { n:3, mark:"ǎ", name:"нырок",   sub:"нырнул и вынырнул",       color:"#1c7ed6", lv:[2,1,4], pts:[[10,40],[26,51],[42,54],[64,42],[90,18]], dur:950 },
+    { n:4, mark:"à", name:"вниз",    sub:"мячик падает",            color:"#7048e8", lv:[5,1],   pts:[[10,14],[90,54]], dur:650 },
+  ];
+  const TONE_SETS = [
+    { id:"ma",   label:"ma",   words:[{zh:"妈",py:"mā",ru:"мама"},{zh:"麻",py:"má",ru:"конопля, онемевший"},{zh:"马",py:"mǎ",ru:"лошадь"},{zh:"骂",py:"mà",ru:"ругать"}] },
+    { id:"tang", label:"tang", words:[{zh:"汤",py:"tāng",ru:"суп"},{zh:"糖",py:"táng",ru:"конфета"},{zh:"躺",py:"tǎng",ru:"лежать"},{zh:"烫",py:"tàng",ru:"горячий"}] },
+    { id:"shu",  label:"shu",  words:[{zh:"书",py:"shū",ru:"книга"},{zh:"熟",py:"shú",ru:"спелый, сваренный"},{zh:"鼠",py:"shǔ",ru:"мышь"},{zh:"树",py:"shù",ru:"дерево"}] },
+    { id:"bao",  label:"bao",  words:[{zh:"包",py:"bāo",ru:"сумка, булочка"},{zh:"薄",py:"báo",ru:"тонкий"},{zh:"宝",py:"bǎo",ru:"сокровище"},{zh:"抱",py:"bào",ru:"обнимать"}] },
+  ];
+  // one-syllable words for the shooting gallery
+  const W = (zh, py, tone, ru, tag = "") => ({ zh, py, tone, ru, tag });
+  const TS_WORDS = [
+    W("黑","hēi",1,"чёрный","colors"), W("白","bái",2,"белый","colors"), W("红","hóng",2,"красный","colors"), W("黄","huáng",2,"жёлтый","colors"),
+    W("蓝","lán",2,"синий","colors"),  W("绿","lǜ",4,"зелёный","colors"),  W("橙","chéng",2,"оранжевый","colors"), W("紫","zǐ",3,"фиолетовый","colors"),
+    W("一","yī",1,"один","numbers"), W("二","èr",4,"два","numbers"), W("三","sān",1,"три","numbers"), W("四","sì",4,"четыре","numbers"), W("五","wǔ",3,"пять","numbers"),
+    W("六","liù",4,"шесть","numbers"), W("七","qī",1,"семь","numbers"), W("八","bā",1,"восемь","numbers"), W("九","jiǔ",3,"девять","numbers"), W("十","shí",2,"десять","numbers"),
+    W("书","shū",1,"книга"), W("天","tiān",1,"небо"), W("家","jiā",1,"дом"), W("山","shān",1,"гора"), W("花","huā",1,"цветок"), W("吃","chī",1,"есть"), W("喝","hē",1,"пить"), W("他","tā",1,"он"),
+    W("人","rén",2,"человек"), W("来","lái",2,"приходить"), W("茶","chá",2,"чай"), W("鱼","yú",2,"рыба"), W("糖","táng",2,"конфета"), W("学","xué",2,"учиться"), W("门","mén",2,"дверь"),
+    W("马","mǎ",3,"лошадь"), W("水","shuǐ",3,"вода"), W("你","nǐ",3,"ты"), W("我","wǒ",3,"я"), W("好","hǎo",3,"хорошо"), W("手","shǒu",3,"рука"), W("狗","gǒu",3,"собака"), W("小","xiǎo",3,"маленький"), W("米","mǐ",3,"рис"), W("火","huǒ",3,"огонь"), W("里","lǐ",3,"в, внутри"), W("左","zuǒ",3,"слева"),
+    W("大","dà",4,"большой"), W("爸","bà",4,"папа"), W("去","qù",4,"идти"), W("树","shù",4,"дерево"), W("月","yuè",4,"месяц"), W("看","kàn",4,"смотреть"), W("菜","cài",4,"овощи, блюдо"), W("是","shì",4,"быть, являться"), W("上","shàng",4,"на, сверху"), W("下","xià",4,"под, снизу"), W("右","yòu",4,"справа"),
+  ];
+  const TS_TOPICS = [{ id:"mix", label:"Всё вместе" }, { id:"colors", label:"Цвета" }, { id:"numbers", label:"Числа" }];
+
+  function contourSVG(tn, withDot) {
+    const T = TONES[tn - 1], pts = T.pts.map(p => p.join(",")).join(" ");
+    return `<svg class="tsvg" viewBox="0 0 100 64" aria-hidden="true">
+      <polyline points="${pts}" fill="none" stroke="${T.color}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+      <circle cx="${T.pts[0][0]}" cy="${T.pts[0][1]}" r="5" fill="#fff" stroke="${T.color}" stroke-width="3"/>
+      ${withDot ? `<circle class="dot" r="6.5" fill="${T.color}" stroke="#fff" stroke-width="2" style="opacity:0"/>` : ""}
+    </svg>`;
+  }
+  function whistle(tn) {
+    if (!soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const T = TONES[tn - 1], t0 = audioCtx.currentTime + 0.02, d = T.dur / 1000;
+      const f = (L) => 170 * Math.pow(2, (L - 1) / 4);
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f(T.lv[0]), t0);
+      for (let i = 1; i < T.lv.length; i++) {
+        const at = T.lv.length === 3 ? [0, 0.4, 1][i] : 1;
+        o.frequency.linearRampToValueAtTime(f(T.lv[i]), t0 + d * at);
+      }
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.04);
+      g.gain.setValueAtTime(0.22, t0 + d - 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + d + 0.03);
+    } catch (_) { /* no audio: fine */ }
+  }
+  function animateDot(root, tn) {
+    const dot = root.querySelector(".dot"); if (!dot) return;
+    const T = TONES[tn - 1], pts = T.pts, lens = [0];
+    for (let i = 1; i < pts.length; i++) lens.push(lens[i-1] + Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]));
+    const total = lens[lens.length - 1], t0 = performance.now();
+    cancelAnimationFrame(dot._raf); dot.style.opacity = 1;
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / T.dur), at = k * total;
+      let i = 1; while (i < lens.length - 1 && lens[i] < at) i++;
+      const u = (at - lens[i-1]) / ((lens[i] - lens[i-1]) || 1);
+      dot.setAttribute("cx", pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * u);
+      dot.setAttribute("cy", pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * u);
+      if (k < 1) dot._raf = requestAnimationFrame(step);
+      else setTimeout(() => { dot.style.opacity = 0; }, 500);
+    })(t0);
+  }
+  function chipRow(box, list, state) {
+    box.innerHTML = "";
+    list.forEach(t => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "chip" + (t.id === state.topic ? " sel" : "");
+      b.textContent = t.label; b.dataset.topic = t.id;
+      b.onclick = () => { state.topic = t.id; [...box.children].forEach(c => c.classList.toggle("sel", c === b)); };
+      box.appendChild(b);
+    });
+  }
+
+  // ---- playground ----
+  (function buildLegend() {
+    const box = $("tLegend"); box.innerHTML = "";
+    TONES.forEach(T => {
+      const c = document.createElement("div"); c.className = "tcard"; c.style.setProperty("--tc", T.color); c.dataset.tone = T.n;
+      c.innerHTML = `<div class="tn">${T.n}-й тон</div><div class="mark">${T.mark}</div>${contourSVG(T.n, true)}
+        <div class="mean" style="color:var(--ink);font-weight:700">${T.name}</div><div class="tnote">${T.sub}</div>
+        <div class="tb"><button class="tbtn" type="button">Свист ♪</button></div>`;
+      c.querySelector("button").onclick = () => { whistle(T.n); animateDot(c, T.n); };
+      box.appendChild(c);
+    });
+  })();
+  const TSET = { topic: "ma" };
+  function renderSet() {
+    const set = TONE_SETS.find(x => x.id === TSET.topic) || TONE_SETS[0];
+    const box = $("tWords"); box.innerHTML = "";
+    set.words.forEach((w, i) => {
+      const T = TONES[i];
+      const c = document.createElement("div"); c.className = "tcard"; c.style.setProperty("--tc", T.color); c.dataset.tone = T.n;
+      c.innerHTML = `<div class="tn">${T.n}-й тон</div><div class="hz">${w.zh}</div><div class="tp">${w.py}</div><div class="mean">${w.ru}</div>${contourSVG(T.n, true)}
+        <div class="tb"><button class="tbtn" type="button" data-k="word">Слово</button><button class="tbtn ghost" type="button" data-k="whistle">Свист ♪</button></div>`;
+      c.querySelector('[data-k="word"]').onclick = () => { speak(w.zh); animateDot(c, T.n); };
+      c.querySelector('[data-k="whistle"]').onclick = () => { whistle(T.n); animateDot(c, T.n); };
+      box.appendChild(c);
+    });
+  }
+  (function buildSets() {
+    const box = $("tSets"); box.innerHTML = "";
+    TONE_SETS.forEach(x => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "chip" + (x.id === TSET.topic ? " sel" : "");
+      b.textContent = x.label; b.dataset.set = x.id;
+      b.onclick = () => { TSET.topic = x.id; [...box.children].forEach(c => c.classList.toggle("sel", c === b)); renderSet(); };
+      box.appendChild(b);
+    });
+    renderSet();
+  })();
+
+  // ---- shooting gallery ----
+  const TS = { topic: "mix", i: 0, total: 10, first: 0, tries: 0, locked: true, busy: false, cur: null, order: [], coins: 0 };
+  chipRow($("tsTopics"), TS_TOPICS, TS);
+  (function buildBoard() {
+    const board = $("tsBoard");
+    TONES.forEach(T => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "tbooth"; b.dataset.tone = T.n; b.style.setProperty("--tc", T.color);
+      b.setAttribute("aria-label", `${T.n}-й тон, ${T.name}`);
+      b.innerHTML = `<span class="tgt">${contourSVG(T.n, false)}</span><span class="tlab">${T.n}-й тон <span style="font-size:22px">${T.mark}</span><small>${T.name}</small></span>`;
+      b.onclick = () => tsShoot(T.n, b);
+      board.appendChild(b);
+    });
+  })();
+  function tsRender() {
+    const w = TS.cur = TS.order[TS.i]; TS.tries = 0; TS.locked = false; TS.busy = false;
+    $("tsProg").textContent = `Выстрел ${TS.i + 1} из ${TS.total}`;
+    $("tsScore").textContent = `Верно с первого раза: ${TS.first}`;
+    $("tsBar").style.width = (TS.i / TS.total * 100) + "%";
+    $("tsHan").textContent = ""; $("tsBoard").dataset.ans = w.tone;
+    $("tsFb").className = "fb"; $("tsFb").textContent = ""; $("tsNext").classList.add("hidden");
+    $("tsHint").disabled = false;
+    [...$("tsBoard").querySelectorAll(".tbooth")].forEach(b => b.classList.remove("ok", "no", "off"));
+    speak(w.zh);
+  }
+  function fireDart(targetEl, done) {
+    const board = $("tsBoard"), d = $("tsDart"), bb = board.getBoundingClientRect(), tb = targetEl.querySelector(".tgt").getBoundingClientRect();
+    const sx = bb.width / 2, sy = bb.height + 14, ex = tb.left - bb.left + tb.width / 2, ey = tb.top - bb.top + tb.height / 2;
+    d.style.transition = "none"; d.style.opacity = "1"; d.style.transform = `translate(${sx}px,${sy}px) scale(1)`; void d.offsetWidth;
+    d.style.transition = "transform .28s ease-out"; d.style.transform = `translate(${ex}px,${ey}px) scale(.55)`;
+    setTimeout(() => { d.style.opacity = "0"; done && done(); }, 300);
+  }
+  function tsShoot(tone, el) {
+    if (TS.locked || TS.busy) return;
+    TS.busy = true;
+    fireDart(el, () => {
+      TS.busy = false;
+      const w = TS.cur, fb = $("tsFb");
+      if (tone === w.tone) {
+        TS.locked = true; el.classList.add("ok"); if (TS.tries === 0) TS.first++;
+        const c = earn(reward(TS.tries)); TS.coins += c;
+        fb.className = "fb ok";
+        fb.innerHTML = `<b>Попал!</b> <span class="zh" style="font-size:24px;font-weight:700">${w.zh}</span> <b>${w.py}</b> — ${w.ru}, ${w.tone}-й тон &nbsp; +${c} ${COIN}`;
+        $("tsScore").textContent = `Верно с первого раза: ${TS.first}`;
+        $("tsBar").style.width = ((TS.i + 1) / TS.total * 100) + "%";
+        $("tsNext").textContent = TS.i + 1 >= TS.total ? "Результат →" : "Дальше →";
+        $("tsNext").classList.remove("hidden");
+      } else {
+        TS.tries++; el.classList.add("no"); setTimeout(() => { el.classList.remove("no"); el.classList.add("off"); }, 450);
+        fb.className = "fb bad"; fb.innerHTML = `<b>Мимо.</b> Послушай ещё раз и попробуй другую мишень!`;
+        speak(w.zh);
+      }
+    });
+  }
+  function tsStart() {
+    const pool = TS_WORDS.filter(w => TS.topic === "mix" || w.tag === TS.topic);
+    TS.order = shuffle(pool).slice(0, 10); TS.total = TS.order.length; TS.i = 0; TS.first = 0; TS.coins = 0;
+    showOnly("ts", "Play"); tsRender();
+  }
+  $("tsGo").onclick = tsStart; $("tsAgain").onclick = () => showOnly("ts", "Start");
+  $("tsSay").onclick = () => { if (TS.cur) speak(TS.cur.zh); };
+  $("tsHint").onclick = () => { if (!TS.cur) return; $("tsHan").textContent = `${TS.cur.zh} — ${TS.cur.ru}`; $("tsHint").disabled = true; };
+  $("tsNext").onclick = () => {
+    TS.i++;
+    if (TS.i >= TS.total) {
+      showOnly("ts", "End"); $("tsStars").textContent = starStr(TS.first, TS.total);
+      $("tsEndText").innerHTML = `С первого раза: <b>${TS.first} из ${TS.total}</b>. <span class="zh">太棒了！</span> Монет: <b>+${TS.coins}</b> ${COIN}`;
+    } else tsRender();
+  };
+  const TTABS = { play: "tPlay", shoot: "tShoot" };
+  function setTTab(name) {
+    Object.entries(TTABS).forEach(([k, id]) => $(id).classList.toggle("hidden", k !== name));
+    [...$("tTabs").children].forEach(b => b.setAttribute("aria-selected", b.dataset.t === name));
+    if (name === "shoot") $("tsWarn").classList.toggle("hidden", !!pickVoice());
+  }
+  [...$("tTabs").children].forEach(b => b.onclick = () => setTTab(b.dataset.t));
+
+  // =====================================================================
+  //                           NAVIGATION & TOGGLES
+  // =====================================================================
+  function setSection(s) {
+    $("secCat").classList.toggle("hidden", s !== "cat");
+    $("secDate").classList.toggle("hidden", s !== "date");
+    $("secTone").classList.toggle("hidden", s !== "tone");
+    $("mCat").setAttribute("aria-selected", s === "cat");
+    $("mDate").setAttribute("aria-selected", s === "date");
+    $("mTone").setAttribute("aria-selected", s === "tone");
+    if (canSpeak) window.speechSynthesis.cancel();
+  }
+  $("mCat").onclick = () => setSection("cat");
+  $("mDate").onclick = () => setSection("date");
+  $("mTone").onclick = () => setSection("tone");
+
+  const DPANELS = { learn: "dLearn", quiz: "dQuiz", match: "dMatch", build: "dBuild", find: "dFind" };
+  function setDTab(name) {
+    Object.entries(DPANELS).forEach(([k, id]) => $(id).classList.toggle("hidden", k !== name));
+    [...$("dTabs").children].forEach(b => b.setAttribute("aria-selected", b.dataset.d === name));
+  }
+  [...$("dTabs").children].forEach(b => b.onclick = () => setDTab(b.dataset.d));
+
+  $("tPinyin").onclick = (e) => {
+    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", on);
+    e.currentTarget.textContent = "Пиньинь: " + (on ? "вкл" : "выкл");
+    document.body.classList.toggle("nopy", !on);
+  };
+  const sBtn = $("tSound");
+  if (!canSpeak) ["tSound", "tSlow"].forEach(id => $(id).classList.add("hidden"));
+  sBtn.onclick = () => {
+    soundOn = !soundOn;
+    sBtn.setAttribute("aria-pressed", soundOn);
+    sBtn.textContent = "Звук: " + (soundOn ? "вкл" : "выкл");
+    if (!soundOn && canSpeak) window.speechSynthesis.cancel();
+  };
+  const slowBtn = $("tSlow");
+  const drawSlow = () => { slowBtn.setAttribute("aria-pressed", slowMode); slowBtn.textContent = "Скорость: " + (slowMode ? "медленная" : "обычная"); };
+  drawSlow();
+  slowBtn.onclick = () => {
+    slowMode = !slowMode; drawSlow();
+    try { localStorage.setItem("zhSlow", slowMode ? "1" : "0"); } catch (_) {}
+    speak("你好！我们一起学汉语吧。");
+  };
+  if (synth) {
+    refreshVoices();
+    if (synth.addEventListener) synth.addEventListener("voiceschanged", refreshVoices);
+    else synth.onvoiceschanged = refreshVoices;
+  }
+
+  // initial render
+  renderLearn(); renderInfo(false); renderRel();
+})();
+</script>
+</body>
+</html>
